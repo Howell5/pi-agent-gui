@@ -26,6 +26,8 @@ describe('JSON task persistence', () => {
 
       const second = new AppStore(root)
       expect(second.findTask(task.id)?.status).toBe('failed')
+      expect(second.findTask(task.id)?.selectedModel).toEqual({ providerId: 'deepseek', modelId: 'deepseek-v4-pro' })
+      expect(second.findTask(task.id)?.permissionMode).toBe('ask')
       expect(second.findTask(task.id)?.messages[0]?.text).toContain('上次运行')
     } finally {
       rmSync(root, { recursive: true, force: true })

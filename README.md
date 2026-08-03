@@ -52,7 +52,7 @@ The DMG is ad-hoc signed as a coherent app bundle, but it is not signed with an 
 Download the Apple Silicon DMG from the GitHub Release, open it, and drag `Heymoss.app` to Applications. Because the build is not notarized, use Control-click → Open on the first launch if macOS asks for confirmation. Configure a Provider token from the plug icon before starting a Task. Verify the download before opening it:
 
 ```bash
-shasum -a 256 Heymoss-0.2.1-arm64.dmg
+shasum -a 256 Heymoss-0.2.2-arm64.dmg
 ```
 
 ## Architecture

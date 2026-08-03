@@ -8,6 +8,15 @@ function firstModel(snapshot: AppSnapshot | null): string {
   return snapshot?.providers.flatMap((provider) => provider.models)[0]?.key ?? ''
 }
 
+function taskModelKey(task: Task): string {
+  return `${task.selectedModel.providerId}::${task.selectedModel.modelId}`
+}
+
+function rememberedTask(snapshot: AppSnapshot, projectId: string): Task | undefined {
+  const rememberedId = localStorage.getItem(`heymoss:last-session:${projectId}`)
+  return rememberedId ? snapshot.tasks.find((task) => task.id === rememberedId && task.projectId === projectId) : undefined
+}
+
 function formatStatus(task: Task): string {
   if (task.status === 'running') return '运行中'
   if (task.status === 'waiting_approval') return '等待授权'
@@ -223,12 +232,15 @@ export function App() {
 
   useEffect(() => {
     void window.appApi.getSnapshot().then((value) => {
+      const task = value.activeProjectId ? rememberedTask(value, value.activeProjectId) : undefined
       setSnapshot(value)
-      setModelKey(firstModel(value))
+      setActiveTaskId(task?.id ?? null)
+      setDraft(!task)
+      setModelKey(task ? taskModelKey(task) : firstModel(value))
+      setPermissionMode(task?.permissionMode ?? 'ask')
     })
     return window.appApi.onSnapshot((value) => {
       setSnapshot(value)
-      setModelKey((current) => current || firstModel(value))
     })
   }, [])
 
@@ -237,14 +249,32 @@ export function App() {
   const activeTask = snapshot?.tasks.find((task) => task.id === activeTaskId) ?? null
   const modelOptions = snapshot?.providers.flatMap((provider) => provider.models) ?? []
 
+  function rememberTask(task: Task): void {
+    localStorage.setItem(`heymoss:last-session:${task.projectId}`, task.id)
+  }
+
+  function applyProjectSelection(value: AppSnapshot, projectId: string | null): void {
+    const task = projectId ? rememberedTask(value, projectId) : undefined
+    setSnapshot(value)
+    setActiveTaskId(task?.id ?? null)
+    setDraft(!task)
+    setModelKey(task ? taskModelKey(task) : firstModel(value))
+    setPermissionMode(task?.permissionMode ?? 'ask')
+  }
+
+  function selectTask(task: Task): void {
+    rememberTask(task)
+    setActiveTaskId(task.id)
+    setDraft(false)
+    setModelKey(taskModelKey(task))
+    setPermissionMode(task.permissionMode)
+  }
+
   async function openProject() {
     setError('')
     try {
       const value = await window.appApi.openProject()
-      setSnapshot(value)
-      setActiveTaskId(null)
-      setDraft(true)
-      setModelKey(firstModel(value))
+      applyProjectSelection(value, value.activeProjectId)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
     }
@@ -254,21 +284,19 @@ export function App() {
     setError('')
     try {
       const value = await window.appApi.selectProject(projectId)
-      setSnapshot(value)
-      setActiveTaskId(null)
-      setDraft(true)
-      setModelKey(firstModel(value))
+      applyProjectSelection(value, projectId)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
     }
   }
 
   function newTask() {
+    const defaultTask = activeTask
     setActiveTaskId(null)
     setDraft(true)
-    setPermissionMode('ask')
+    setPermissionMode(defaultTask?.permissionMode ?? permissionMode)
     setInput('')
-    setModelKey(firstModel(snapshot))
+    setModelKey(defaultTask ? taskModelKey(defaultTask) : modelKey || firstModel(snapshot))
   }
 
   async function send() {
@@ -281,6 +309,7 @@ export function App() {
         const task = await window.appApi.createTask({ projectId: activeProject.id, modelKey, permissionMode })
         taskId = task.id
         setActiveTaskId(task.id)
+        rememberTask(task)
         setDraft(false)
       }
       await window.appApi.sendMessage({ taskId, text })
@@ -332,9 +361,9 @@ export function App() {
             </button>
           ))}
           {activeProject && <>
-            <div className="sidebar-heading task-heading"><span>任务</span><button className="icon-button small-button" onClick={newTask}><MessageSquarePlus size={15} /></button></div>
+            <div className="sidebar-heading task-heading"><span>会话</span><button className="icon-button small-button" onClick={newTask} title="新会话"><MessageSquarePlus size={15} /></button></div>
             {projectTasks.map((task) => (
-              <button key={task.id} className={`task-row ${task.id === activeTaskId ? 'selected' : ''}`} onClick={() => { setActiveTaskId(task.id); setDraft(false); setModelKey(`${task.selectedModel.providerId}::${task.selectedModel.modelId}`); }}>
+              <button key={task.id} className={`task-row ${task.id === activeTaskId ? 'selected' : ''}`} onClick={() => selectTask(task)}>
                 <span className={`task-status ${task.status}`} />
                 <span><strong>{task.title}</strong><small>{formatStatus(task)}</small></span>
               </button>
@@ -353,8 +382,8 @@ export function App() {
           ) : (
             <>
               <div className="conversation-heading">
-                <div><div className="eyebrow">{activeProject.displayName}</div><h1>{activeTask?.title ?? '新任务'}</h1></div>
-                <div className="heading-actions"><span className={`status-pill ${activeTask?.status ?? 'idle'}`}>{activeTask ? formatStatus(activeTask) : '新任务'}</span><button className="button subtle" onClick={newTask}><MessageSquarePlus size={15} />新任务</button></div>
+                <div><div className="eyebrow">{activeProject.displayName}</div><h1>{activeTask?.title ?? '新会话'}</h1></div>
+                <div className="heading-actions"><span className={`status-pill ${activeTask?.status ?? 'idle'}`}>{activeTask ? formatStatus(activeTask) : '新会话'}</span><button className="button subtle" onClick={newTask}><MessageSquarePlus size={15} />新会话</button></div>
               </div>
               <div className="message-scroll">
                 {activeTask?.messages.length ? activeTask.messages.map((message) => <AppMessage key={message.id} message={message} onPermission={(item, approved) => void respondPermission(item, approved)} />) : <div className="conversation-empty">描述你希望 Agent 在这个项目里完成什么。</div>}
