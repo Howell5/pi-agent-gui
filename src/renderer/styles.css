@@ -561,7 +561,7 @@ button:disabled {
   padding: 0;
 }
 
-.aui-chain-of-thought [data-slot="collapsible-trigger"] {
+.aui-chain-of-thought > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] {
   min-height: 24px;
   padding: 4px 0 6px;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
