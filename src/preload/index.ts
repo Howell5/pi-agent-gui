@@ -4,7 +4,8 @@ import type { AppApi, AppSnapshot } from '../shared/types'
 const api: AppApi = {
   getSnapshot: () => ipcRenderer.invoke('app:getSnapshot'),
   openProject: () => ipcRenderer.invoke('app:openProject'),
-  createManagedProject: () => ipcRenderer.invoke('app:createManagedProject'),
+  beginNewChat: () => ipcRenderer.invoke('app:beginNewChat'),
+  createTemporaryProject: () => ipcRenderer.invoke('app:createTemporaryProject'),
   selectProject: (projectId) => ipcRenderer.invoke('app:selectProject', projectId),
   pickFile: (projectId) => ipcRenderer.invoke('app:pickFile', projectId),
   createTask: (input) => ipcRenderer.invoke('app:createTask', input),

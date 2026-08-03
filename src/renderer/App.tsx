@@ -93,8 +93,8 @@ function Sidebar(props: {
   onOpenInstructions: (project: Project) => void
   onToggleProject: (projectId: string) => void
 }) {
-  const projects = props.snapshot.projects
-  const projectById = new Map(projects.map((project) => [project.id, project]))
+  const projects = props.snapshot.projects.filter((project) => project.origin !== "temporary")
+  const projectById = new Map(props.snapshot.projects.map((project) => [project.id, project]))
   const tasks = props.snapshot.tasks.filter((task) => !task.archived)
   const pinned = tasks.filter((task) => task.pinned).sort((a, b) => b.updatedAt - a.updatedAt)
   const recents = tasks.filter((task) => !task.pinned).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 8)
@@ -270,6 +270,7 @@ export function App() {
   const [draftText, setDraftText] = useState("")
   const [modelKey, setModelKey] = useState("")
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("ask")
+  const [newChatMode, setNewChatMode] = useState(false)
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("chat")
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
@@ -293,6 +294,7 @@ export function App() {
       setSnapshot(value)
       setActiveTaskId(task?.id ?? null)
       setDraft(!task)
+      setNewChatMode(false)
       setModelKey(task ? taskModelKey(task) : firstModel(value))
       setPermissionMode(task?.permissionMode ?? "ask")
       if (value.activeProjectId) setExpandedProjects(new Set([value.activeProjectId]))
@@ -325,6 +327,7 @@ export function App() {
     try {
       const value = await window.appApi.openProject()
       setProjectSnapshot(value, value.activeProjectId)
+      setNewChatMode(false)
       setWorkspaceView("chat")
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
@@ -336,6 +339,7 @@ export function App() {
     try {
       const value = await window.appApi.selectProject(projectId)
       setProjectSnapshot(value, projectId)
+      setNewChatMode(false)
       setWorkspaceView("chat")
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
@@ -353,8 +357,9 @@ export function App() {
 
   async function newChat(): Promise<void> {
     try {
-      const value = await window.appApi.createManagedProject()
-      setProjectSnapshot(value, value.activeProjectId)
+      const value = await window.appApi.beginNewChat()
+      setProjectSnapshot(value, null)
+      setNewChatMode(true)
       setWorkspaceView("chat")
       setError("")
     } catch (cause) {
@@ -362,8 +367,30 @@ export function App() {
     }
   }
 
+  async function chooseDraftProject(projectId: string | null): Promise<void> {
+    try {
+      if (projectId) {
+        const value = await window.appApi.selectProject(projectId)
+        setSnapshot(value)
+        setActiveTaskId(null)
+        setDraft(true)
+        setModelKey(firstModel(value))
+        setPermissionMode("ask")
+        setExpandedProjects((current) => new Set(current).add(projectId))
+      } else {
+        const value = await window.appApi.beginNewChat()
+        setProjectSnapshot(value, null)
+      }
+      setNewChatMode(true)
+      setWorkspaceView("chat")
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    }
+  }
+
   async function newTaskForProject(projectId: string): Promise<void> {
     if (projectId !== snapshot?.activeProjectId) await selectProject(projectId)
+    setNewChatMode(false)
     setActiveTaskId(null)
     setDraft(true)
     setWorkspaceView("chat")
@@ -385,19 +412,29 @@ export function App() {
     localStorage.setItem("heymoss:last-session:" + task.projectId, task.id)
     setActiveTaskId(task.id)
     setDraft(false)
+    setNewChatMode(false)
     setModelKey(taskModelKey(task))
     setPermissionMode(task.permissionMode)
     setWorkspaceView("chat")
   }
 
   async function startMessage(text: string): Promise<void> {
-    if (!activeProject || !modelKey) return
+    if (!modelKey) return
+    let project = activeProject
+    if (!project) {
+      const value = await window.appApi.createTemporaryProject()
+      project = value.projects.find((item) => item.id === value.activeProjectId) ?? null
+      if (!project) throw new Error("Temporary Chat project could not be created")
+      setSnapshot(value)
+      setExpandedProjects((current) => new Set(current).add(project!.id))
+    }
     let taskId = activeTaskId
     if (!taskId || draft) {
-      const task = await window.appApi.createTask({ projectId: activeProject.id, modelKey, permissionMode })
+      const task = await window.appApi.createTask({ projectId: project.id, modelKey, permissionMode })
       taskId = task.id
       setActiveTaskId(task.id)
       setDraft(false)
+      setNewChatMode(false)
       localStorage.setItem("heymoss:last-session:" + task.projectId, task.id)
     }
     if (draftKey) localStorage.removeItem(draftKey)
@@ -489,15 +526,17 @@ export function App() {
   }
 
   if (!snapshot) return <div className="heymoss-loading">Loading…</div>
-  const projectForInstructions = activeProject
+  const projectForInstructions = activeProject?.origin === "temporary" ? null : activeProject
+  const showChatPreview = Boolean(activeProject) || newChatMode
+  const projectOptions = snapshot.projects.filter((project) => project.origin !== "temporary")
 
   return (
     <div className="heymoss-app-shell">
       {sidebarOpen ? <Sidebar snapshot={snapshot} activeProject={activeProject} activeTaskId={activeTaskId} expandedProjects={expandedProjects} onToggleSidebar={() => setSidebarOpen(false)} onOpenProject={() => void openProject()} onNewChat={() => void newChat()} onNewSessionForProject={(id) => void newTaskForProject(id)} onSelectProject={(id) => void selectProject(id)} onSelectTask={(task) => void selectTask(task)} onTaskAction={(task, action) => void handleTaskAction(task, action)} onOpenProviders={() => setWorkspaceView("providers")} onOpenInstructions={async (project) => { if (project.id !== snapshot.activeProjectId) { try { const next = await window.appApi.selectProject(project.id); setSnapshot(next) } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); return } } setWorkspaceView("instructions") }} onToggleProject={(id) => setExpandedProjects((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next })} /> : <button className="heymoss-sidebar-reopen" type="button" onClick={() => setSidebarOpen(true)} title="展开侧栏"><PanelLeftOpen className="size-4" /></button>}
       <main className={cn("heymoss-main", !sidebarOpen && "is-sidebar-collapsed")}>
-        {workspaceView === "providers" ? <ProviderSettings snapshot={snapshot} onSnapshot={setSnapshot} onClose={() => setWorkspaceView("chat")} /> : workspaceView === "instructions" && projectForInstructions ? <ProjectInstructions project={projectForInstructions} onSaved={setSnapshot} onClose={() => setWorkspaceView("chat")} /> : !activeProject ? <div className="heymoss-empty-project"><div><div className="heymoss-empty-mark">H</div><h1>从一个项目开始</h1><p>选择任意本地文件夹，让 Pi Agent 在其中工作。</p><Button onClick={() => void openProject()}><FolderOpen className="size-4" />打开文件夹</Button></div></div> : <div className="heymoss-chat-workspace">
-          <header className="heymoss-workspace-header"><div className="heymoss-workspace-heading"><h1>{activeTask?.title ?? "New Chat"}</h1><span>{activeProject.displayName}</span></div><div className="heymoss-workspace-actions">{activeTask?.status === "running" && <span className="heymoss-working"><span className="heymoss-status-spinner" />Working</span>}<Button variant="ghost" size="icon-sm" className="heymoss-icon-button" onClick={() => setWorkspaceView("instructions")} title="Project Instructions"><FileText className="size-3.5" /></Button></div></header>
-          <AssistantThread key={activeTaskId ?? "draft-" + activeProject.id} task={activeTask} modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} draftText={draftText} onDraftChange={updateDraft} onModelChange={(value) => { const previous = { modelKey, permissionMode }; setModelKey(value); void saveTaskSettings({ modelKey: value }, previous) }} onPermissionModeChange={(value) => { const previous = { modelKey, permissionMode }; setPermissionMode(value); void saveTaskSettings({ permissionMode: value }, previous) }} onNew={startMessage} onCancel={() => activeTaskId ? window.appApi.stopTask(activeTaskId) : Promise.resolve()} onPermission={async (approvalId, approved) => { if (activeTaskId) await window.appApi.respondPermission({ taskId: activeTaskId, approvalId, approved }) }} onRetry={retryTask} onAttachFile={attachFile} />
+        {workspaceView === "providers" ? <ProviderSettings snapshot={snapshot} onSnapshot={setSnapshot} onClose={() => setWorkspaceView("chat")} /> : workspaceView === "instructions" && projectForInstructions ? <ProjectInstructions project={projectForInstructions} onSaved={setSnapshot} onClose={() => setWorkspaceView("chat")} /> : !showChatPreview ? <div className="heymoss-empty-project"><div><div className="heymoss-empty-mark">H</div><h1>从一个项目开始</h1><p>选择任意本地文件夹，让 Pi Agent 在其中工作。</p><Button onClick={() => void openProject()}><FolderOpen className="size-4" />打开文件夹</Button></div></div> : <div className="heymoss-chat-workspace">
+          <header className="heymoss-workspace-header"><div className="heymoss-workspace-heading"><h1>{activeTask?.title ?? "New Chat"}</h1><span>{activeProject?.origin === "temporary" ? "No project" : activeProject?.displayName ?? "No project"}</span></div><div className="heymoss-workspace-actions">{activeTask?.status === "running" && <span className="heymoss-working"><span className="heymoss-status-spinner" />Working</span>}<Button variant="ghost" size="icon-sm" className="heymoss-icon-button" onClick={() => projectForInstructions && setWorkspaceView("instructions")} title="Project Instructions" disabled={!projectForInstructions}><FileText className="size-3.5" /></Button></div></header>
+          <AssistantThread key={activeTaskId ?? "draft-" + (activeProject?.id ?? "no-project")} task={activeTask} modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} projectOptions={projectOptions} projectId={activeProject?.origin === "temporary" ? null : activeProject?.id ?? null} showProjectPicker={newChatMode && draft} onProjectChange={chooseDraftProject} draftText={draftText} onDraftChange={updateDraft} onModelChange={(value) => { const previous = { modelKey, permissionMode }; setModelKey(value); void saveTaskSettings({ modelKey: value }, previous) }} onPermissionModeChange={(value) => { const previous = { modelKey, permissionMode }; setPermissionMode(value); void saveTaskSettings({ permissionMode: value }, previous) }} onNew={startMessage} onCancel={() => activeTaskId ? window.appApi.stopTask(activeTaskId) : Promise.resolve()} onPermission={async (approvalId, approved) => { if (activeTaskId) await window.appApi.respondPermission({ taskId: activeTaskId, approvalId, approved }) }} onRetry={retryTask} onAttachFile={attachFile} />
           {error && <Alert variant="destructive" className="heymoss-error-alert"><AlertTitle>需要注意</AlertTitle><AlertDescription>{error}</AlertDescription><Button variant="ghost" size="icon-xs" onClick={() => setError("")}><X className="size-3.5" /></Button></Alert>}
         </div>}
       </main>

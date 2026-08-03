@@ -1,8 +1,8 @@
 # Heymoss v0.3.2
 
-This release makes the New Chat boundary explicit. Top-level **New Chat** now creates a new empty managed project instead of opening another session inside the currently selected project. Managed projects are allocated under `~/Heymoss/YYYY-MM-DD/new-chat[-N]`, following the date/name layout used by Codex on this Mac. The `Projects +` action and each project row now remain the entry points for opening an existing folder or creating another session in that project.
+This release makes the New Chat boundary explicit. Top-level **New Chat** now opens an unscoped preview instead of creating a Project immediately. The preview can be assigned to an existing Project; if it remains unscoped, Heymoss creates a temporary `~/Heymoss/YYYY-MM-DD/temp-chat-*` workspace only when the first message is sent. Temporary Chats stay out of Projects and appear through Recents. The `Projects +` action and each project row remain the entry points for opening an existing folder or creating another session in that project.
 
-The HTML design source now documents the empty-project state and its working-directory path. Existing persisted projects and sessions remain compatible; folders opened by the user are marked as external projects, while newly allocated folders are marked as managed projects.
+The HTML design source now documents the unscoped preview state and lazy temporary workspace creation. Existing persisted projects and sessions remain compatible; folders opened by the user are marked as external projects, while temporary Chat workspaces are marked as temporary and hidden from Projects.
 
 Validation: `npm run typecheck` and `npm test` (11 tests) pass.
 

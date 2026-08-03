@@ -9,7 +9,7 @@ import type { AppSnapshot, PermissionMode, Project, Task, UiMessage } from '../s
 import { AppStore, type StoredProvider } from './store'
 import { SecretStore } from './secrets'
 import { buildProviderViews, parseModelKey } from './provider-catalog'
-import { createManagedProjectPath } from './managed-projects'
+import { createTemporaryProjectPath } from './chat-projects'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -337,17 +337,22 @@ function registerIpc(): void {
     return broadcast()
   })
 
-  ipcMain.handle('app:createManagedProject', () => {
-    const projectPath = createManagedProjectPath(app.getPath('home'))
+  ipcMain.handle('app:beginNewChat', () => {
+    store.setActiveProject(null)
+    return broadcast()
+  })
+
+  ipcMain.handle('app:createTemporaryProject', () => {
+    const projectPath = createTemporaryProjectPath(app.getPath('home'))
     const project: Project = {
       id: randomUUID(),
       path: projectPath,
-      displayName: projectPath.split('/').filter(Boolean).pop() ?? 'new-chat',
+      displayName: 'Chat',
       lastOpenedAt: now(),
-      origin: 'managed',
+      origin: 'temporary',
     }
     store.upsertProject(project)
-    store.log(`created managed project at ${projectPath}`)
+    store.log(`created temporary Chat project at ${projectPath}`)
     return broadcast()
   })
 

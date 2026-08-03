@@ -265,8 +265,6 @@
       .new-chat-copy { margin: 0 0 18px; }
       .new-chat-copy h2 { margin: 0 0 4px; font-size: 21px; font-weight: 650; letter-spacing: -.03em; }
       .new-chat-copy p { margin: 0; color: var(--ink-faint); font-size: 11px; }
-      .new-chat-path { display: flex; align-items: center; gap: 6px; margin: -9px 0 18px; color: var(--ink-faint); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
-      .new-chat-path .icon { color: var(--ink-soft); }
 
       /* Context menu */
       .context-menu {
@@ -524,13 +522,12 @@
               <div data-sidebar></div>
               <main class="workspace">
                 <header class="workspace-head">
-                  <div class="workspace-heading"><h1>New Chat</h1><span class="workspace-project">new-chat</span></div>
+                  <div class="workspace-heading"><h1>New Chat</h1><span class="workspace-project">No project</span></div>
                   <div class="workspace-head-actions"><button class="icon-button" type="button" title="会话菜单"><svg class="icon"><use href="#i-more"/></svg></button></div>
                 </header>
                 <section class="empty-chat">
                   <div class="new-chat-stack">
-                    <div class="new-chat-copy"><h2>开始处理什么？</h2><p>这是一个全新的空项目。发送第一条消息后，Agent 会在自己的工作目录中开始工作。</p></div>
-                    <div class="new-chat-path"><svg class="icon small"><use href="#i-folder"/></svg>~/Heymoss/2026-08-03/new-chat</div>
+                    <div class="new-chat-copy"><h2>开始处理什么？</h2><p>这是一个未指定项目的 Chat。你可以先选择已有项目；不选择时，发送后才会创建临时工作目录。</p></div>
                     <form class="composer">
                       <textarea aria-label="消息" placeholder="描述任务，或输入 @ 引用项目文件"></textarea>
                       <div class="composer-bar">
@@ -538,7 +535,7 @@
                         <button class="composer-choice" type="button">DeepSeek V4 Pro<svg class="icon small"><use href="#i-chevron-down"/></svg></button>
                         <button class="composer-choice" type="button">Ask<svg class="icon small"><use href="#i-chevron-down"/></svg></button>
                         <span class="composer-spacer"></span>
-                        <button class="composer-choice project-choice" type="button"><svg class="icon small"><use href="#i-folder"/></svg>Open another folder…</button>
+                        <button class="composer-choice project-choice" type="button"><svg class="icon small"><use href="#i-folder"/></svg>No project<svg class="icon small"><use href="#i-chevron-down"/></svg></button>
                         <button class="send-button" type="button"><svg class="icon small"><use href="#i-send"/></svg></button>
                       </div>
                     </form>

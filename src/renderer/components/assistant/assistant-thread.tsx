@@ -19,7 +19,7 @@ import { ChainOfThought, ChainOfThoughtContent, ChainOfThoughtHeader, ChainOfTho
 import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { ModelOption, PermissionMode, Task, UiMessage } from "@shared/types"
+import type { ModelOption, PermissionMode, Project, Task, UiMessage } from "@shared/types"
 import { MarkdownMessage } from "../../MarkdownMessage"
 import { groupConsecutiveTools, isCompactToolArgs, toolDetail } from "./tool-summary"
 
@@ -37,6 +37,10 @@ type AssistantThreadProps = {
   onPermission: (approvalId: string, approved: boolean) => Promise<void>
   onRetry: () => Promise<void>
   onAttachFile: () => Promise<string | null>
+  projectOptions: Project[]
+  projectId: string | null
+  showProjectPicker: boolean
+  onProjectChange: (projectId: string | null) => Promise<void>
   draftText: string
   onDraftChange: (text: string) => void
 }
@@ -254,7 +258,7 @@ function AssistantMessage() {
   )
 }
 
-function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, draftText, onDraftChange, onModelChange, onPermissionModeChange, onAttachFile }: Omit<AssistantThreadProps, "task" | "onNew" | "onCancel" | "onPermission" | "onRetry">) {
+function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, projectOptions, projectId, showProjectPicker, onProjectChange, draftText, onDraftChange, onModelChange, onPermissionModeChange, onAttachFile }: Omit<AssistantThreadProps, "task" | "onNew" | "onCancel" | "onPermission" | "onRetry">) {
   const aui = useAui()
   const running = useAuiState((state) => state.thread.isRunning)
   const canSend = useAuiState((state) => state.composer.canSend)
@@ -278,6 +282,10 @@ function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEdi
   return (
     <ComposerPrimitive.Root className="aui-composer">
       <div className="aui-composer-toolbar">
+        {showProjectPicker && <Select value={projectId ?? "none"} onValueChange={(value) => void onProjectChange(value === "none" ? null : value)}>
+          <SelectTrigger className="aui-composer-project"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="none">No project</SelectItem>{projectOptions.map((project) => <SelectItem key={project.id} value={project.id}>{project.displayName}</SelectItem>)}</SelectContent>
+        </Select>}
         <Select value={modelKey} onValueChange={onModelChange} disabled={!settingsEditable || settingsSaving || !modelOptions.length}>
           <SelectTrigger className="aui-composer-select" title={selectedModel?.providerName ? `${selectedModel.name} · ${selectedModel.providerName}` : selectedModel?.name}><SelectValue placeholder="先配置模型服务商">{selectedModel?.name}</SelectValue></SelectTrigger>
           <SelectContent>{modelOptions.map((model) => <SelectItem key={model.key} value={model.key}><span className="flex min-w-0 items-center gap-1.5"><span className="truncate">{model.name}</span>{model.providerName && <span className="shrink-0 text-xs text-muted-foreground">· {model.providerName}</span>}</span></SelectItem>)}</SelectContent>
@@ -295,7 +303,7 @@ function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEdi
   )
 }
 
-export function AssistantThread({ task, modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, draftText, onDraftChange, onModelChange, onPermissionModeChange, onNew, onCancel, onPermission, onRetry, onAttachFile }: AssistantThreadProps) {
+export function AssistantThread({ task, modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, projectOptions, projectId, showProjectPicker, onProjectChange, draftText, onDraftChange, onModelChange, onPermissionModeChange, onNew, onCancel, onPermission, onRetry, onAttachFile }: AssistantThreadProps) {
   const externalMessages = useMemo(() => buildThreadMessages(task?.messages ?? [], task), [task])
   const runtime = useExternalStoreRuntime<ThreadMessageLike>({
     messages: externalMessages,
@@ -323,7 +331,7 @@ export function AssistantThread({ task, modelOptions, modelKey, permissionMode, 
           </div>
         </ThreadPrimitive.Viewport>
         <div className="aui-thread-footer">
-          <AssistantComposer modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} draftText={draftText} onDraftChange={onDraftChange} onModelChange={onModelChange} onPermissionModeChange={onPermissionModeChange} onAttachFile={onAttachFile} />
+          <AssistantComposer modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} projectOptions={projectOptions} projectId={projectId} showProjectPicker={showProjectPicker} onProjectChange={onProjectChange} draftText={draftText} onDraftChange={onDraftChange} onModelChange={onModelChange} onPermissionModeChange={onPermissionModeChange} onAttachFile={onAttachFile} />
         </div>
       </ThreadPrimitive.Root>
     </AssistantRuntimeProvider>

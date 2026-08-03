@@ -1647,6 +1647,7 @@ body {
   gap: 2px;
 }
 
+.aui-composer-project,
 .aui-composer-select,
 .aui-composer-mode {
   width: auto;
@@ -1660,9 +1661,14 @@ body {
   font-size: 10px;
 }
 
+.aui-composer-project:hover,
 .aui-composer-select:hover,
 .aui-composer-mode:hover {
   background: #e9e9e6;
+}
+
+.aui-composer-project {
+  max-width: 150px;
 }
 
 .aui-composer-select {
