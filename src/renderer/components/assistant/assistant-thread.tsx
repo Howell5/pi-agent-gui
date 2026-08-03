@@ -16,11 +16,12 @@ import type { ToolUIPart } from "ai"
 import { Check, FileUp, LoaderCircle, Send, Square, X } from "lucide-react"
 import { useMemo } from "react"
 import { ChainOfThought, ChainOfThoughtContent, ChainOfThoughtHeader, ChainOfThoughtStep } from "@/components/ai-elements/chain-of-thought"
-import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "@/components/ai-elements/tool"
+import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ModelOption, PermissionMode, Task, UiMessage } from "@shared/types"
 import { MarkdownMessage } from "../../MarkdownMessage"
+import { groupConsecutiveTools, isCompactToolArgs, toolDetail } from "./tool-summary"
 
 type AssistantThreadProps = {
   task: Task | null
@@ -105,7 +106,7 @@ function buildThreadMessages(messages: UiMessage[], task: Task | null): ThreadMe
     const user = turn.find((message) => message.role === "user")
     const hidden = turn.filter((message) => message.role === "tool" || message.role === "approval" || (message.role === "assistant" && message.thinking?.trim()))
     const visibleText = turn.filter((message) => message.role === "assistant" && message.text.trim())
-    const activityParts: ThreadPart[] = hidden.map((message) => message.role === "approval" ? approvalPart(message) : message.role === "tool" ? toolPart(message) : { type: "reasoning" as const, text: message.thinking ?? "" })
+    const activityParts: ThreadPart[] = groupConsecutiveTools(hidden).map((message) => message.role === "approval" ? approvalPart(message) : message.role === "tool" ? toolPart(message) : { type: "reasoning" as const, text: message.thinking ?? "" })
     const textParts: ThreadPart[] = visibleText.map((message) => ({ type: "text" as const, text: message.text }))
     const startedAt = user?.createdAt ?? turn[0]?.createdAt ?? Date.now()
     const endedAt = turn[turn.length - 1]?.createdAt ?? startedAt
@@ -156,6 +157,18 @@ function AssistantText({ text }: { text: string }) {
   return <MarkdownMessage source={text} />
 }
 
+function resultText(result: unknown): string | undefined {
+  if (typeof result === "string") return result.trim() || undefined
+  if (result && typeof result === "object") {
+    try {
+      return JSON.stringify(result, null, 2)
+    } catch {
+      return String(result)
+    }
+  }
+  return result == null ? undefined : String(result)
+}
+
 function AssistantTool({ toolName, args, result, isError, status, approval, respondToApproval }: ToolCallMessagePartProps) {
   const approvalPending = approval && approval.approved === undefined
   const toolState: ToolUIPart["state"] = approvalPending
@@ -165,15 +178,18 @@ function AssistantTool({ toolName, args, result, isError, status, approval, resp
       : isError
         ? "output-error"
         : "output-available"
+  const compactArgs = isCompactToolArgs(args) ? args : undefined
+  const details = compactArgs?.items.join(", ") ?? toolDetail({ toolName, toolArgs: args && typeof args === "object" ? args as Record<string, unknown> : undefined })
   const title = toolName === "approval" ? "需要授权" : toolName
+  const output = resultText(result)
   return (
     <Tool defaultOpen={false} className="aui-tool">
-      <ToolHeader title={title} type={`tool-${toolName}`} state={toolState} />
-      <ToolContent>
-        <ToolInput input={args} />
-        <ToolOutput output={result} errorText={isError ? "工具执行失败" : undefined} />
+      <ToolHeader compact title={title} type={`tool-${toolName}`} state={toolState} />
+      <ToolContent className="aui-tool-content">
+        {details && <div className="aui-tool-detail">{details}</div>}
+        {output && <pre className={`aui-tool-output${isError ? " aui-tool-output-error" : ""}`}>{output}</pre>}
         {approvalPending && (
-          <div className="flex gap-2 border-t px-4 py-3">
+          <div className="aui-tool-approval">
             <Button size="sm" onClick={() => respondToApproval({ approved: true })}><Check className="size-3.5" />允许</Button>
             <Button size="sm" variant="outline" onClick={() => respondToApproval({ approved: false })}><X className="size-3.5" />拒绝</Button>
           </div>

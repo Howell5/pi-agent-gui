@@ -224,17 +224,87 @@ button:disabled {
 
 .aui-tool-group {
   display: grid;
-  gap: 6px;
+  gap: 2px;
 }
 
 .aui-tool {
   margin: 0;
-  border-color: var(--border);
-  background: color-mix(in srgb, var(--card) 55%, transparent);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .aui-tool [data-slot="collapsible-trigger"] {
-  min-height: 38px;
+  min-height: 24px;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 2px 0;
+  color: var(--muted-foreground);
+}
+
+.aui-tool [data-slot="collapsible-trigger"] > div:first-child {
+  min-width: 0;
+  flex: 1;
+  gap: 6px;
+}
+
+.aui-tool [data-slot="collapsible-trigger"] > div:first-child > svg {
+  width: 14px;
+  height: 14px;
+}
+
+.aui-tool [data-slot="collapsible-trigger"] .font-medium {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aui-tool [data-slot="collapsible-trigger"] > svg,
+.aui-tool [data-slot="collapsible-trigger"] .aui-tool-status svg {
+  width: 13px;
+  height: 13px;
+  color: var(--muted-foreground);
+}
+
+.aui-tool-content {
+  margin-left: 22px;
+  padding: 2px 0 6px;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.aui-tool-detail {
+  padding: 2px 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.aui-tool-output {
+  max-height: 180px;
+  margin: 2px 0;
+  overflow: auto;
+  padding: 5px 8px;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+  font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.aui-tool-output-error {
+  border-left-color: color-mix(in srgb, var(--destructive) 55%, var(--border));
+  color: var(--destructive);
+}
+
+.aui-tool-approval {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0 2px;
 }
 
 .aui-reasoning-group {
