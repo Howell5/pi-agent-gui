@@ -52,6 +52,7 @@ function broadcast(): AppSnapshot {
 }
 
 function sendSystemMessage(task: Task, text: string): void {
+  store.log(`${task.id}: ${text}`)
   taskMessage(task, { id: randomUUID(), role: 'system', text, createdAt: now() })
 }
 

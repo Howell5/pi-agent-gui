@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { AppSnapshot, Project, ProviderKind, Task } from '../shared/types'
 
@@ -46,16 +46,20 @@ function atomicWrite(path: string, value: unknown): void {
 export class AppStore {
   readonly rootPath: string
   readonly tasksPath: string
-  private readonly statePath: string
+  readonly logsPath: string
+  private readonly projectsPath: string
   private state: StoredState
   private readonly taskMap = new Map<string, Task>()
 
   constructor(rootPath: string) {
     this.rootPath = rootPath
     this.tasksPath = join(rootPath, 'tasks')
-    this.statePath = join(rootPath, 'state.json')
+    this.logsPath = join(rootPath, 'logs')
+    this.projectsPath = join(rootPath, 'projects.json')
     mkdirSync(this.tasksPath, { recursive: true })
-    this.state = readJson(this.statePath, EMPTY_STATE)
+    mkdirSync(this.logsPath, { recursive: true })
+    this.state = readJson(this.projectsPath, readJson(join(rootPath, 'state.json'), EMPTY_STATE))
+    this.log('application store opened')
     this.loadTasks()
   }
 
@@ -81,7 +85,11 @@ export class AppStore {
   }
 
   save(): void {
-    atomicWrite(this.statePath, this.state)
+    atomicWrite(this.projectsPath, this.state)
+  }
+
+  log(message: string): void {
+    appendFileSync(join(this.logsPath, 'app.log'), `[${new Date().toISOString()}] ${message}\n`, 'utf8')
   }
 
   saveTask(task: Task): void {

@@ -2,6 +2,7 @@ import { isAbsolute, relative, resolve } from 'node:path'
 
 const READ_ONLY_TOOLS = new Set(['read', 'grep', 'find', 'ls'])
 const DANGEROUS_COMMAND = /(^|[;&|]\s*)(rm|sudo|mkfs|shutdown|reboot|chown|chmod)\b|git\s+reset\s+--hard|curl[^\n|]*\|\s*(sh|bash)\b/i
+const SENSITIVE_PATH = /(^|[\\/\s"'=])(?:~[\\/])?(?:\.ssh(?:[\\/]|$)|\.aws(?:[\\/]|$)|\.npmrc\b|\.env(?:\b|$)|credentials(?:\.json)?\b|private[_-]?key\b|id_rsa\b)/i
 
 export function isInsideProject(projectPath: string, targetPath: string): boolean {
   const absoluteTarget = isAbsolute(targetPath) ? resolve(targetPath) : resolve(projectPath, targetPath)
@@ -28,5 +29,9 @@ export function isReadOnlyTool(toolName: string): boolean {
 }
 
 export function isDangerousShell(command: string): boolean {
-  return DANGEROUS_COMMAND.test(command)
+  return DANGEROUS_COMMAND.test(command) || SENSITIVE_PATH.test(command) || /(^|[;&|\s])env\s*(?:$|[;&|])/i.test(command)
+}
+
+export function isSensitivePath(path: string): boolean {
+  return SENSITIVE_PATH.test(path)
 }

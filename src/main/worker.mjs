@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { existsSync } from 'node:fs'
+import { existsSync, realpathSync } from 'node:fs'
+import { isAbsolute, relative, resolve } from 'node:path'
 import { ModelRegistry, ModelRuntime, SessionManager, createAgentSession } from '@earendil-works/pi-coding-agent'
 
 const parentPort = process.parentPort
@@ -14,6 +15,7 @@ const queuedCommands = []
 const pendingPermissions = new Map()
 const READ_ONLY_TOOLS = new Set(['read', 'grep', 'find', 'ls'])
 const DANGEROUS_COMMAND = /(^|[;&|]\s*)(rm|sudo|mkfs|shutdown|reboot|chown|chmod)\b|git\s+reset\s+--hard|curl[^\n|]*\|\s*(sh|bash)\b/i
+const SENSITIVE_PATH = /(^|[\\/\s"'=])(?:~[\\/])?(?:\.ssh(?:[\\/]|$)|\.aws(?:[\\/]|$)|\.npmrc\b|\.env(?:\b|$)|credentials(?:\.json)?\b|private[_-]?key\b|id_rsa\b)/i
 
 function post(message) {
   parentPort.postMessage(message)
@@ -44,6 +46,9 @@ function safeDescription(toolName, args) {
 function blockReason(toolName, args) {
   const record = args && typeof args === 'object' ? args : {}
   const target = targetFromArgs(record)
+  if (target && sensitivePath(target)) {
+    return `Blocked ${toolName}: credential-sensitive path`
+  }
   if (target && !insideProject(config.cwd, target)) {
     return `Blocked ${toolName}: target is outside the project`
   }
@@ -69,14 +74,24 @@ function commandFromArgs(args) {
 }
 
 function insideProject(projectPath, targetPath) {
-  const absoluteTarget = targetPath.startsWith('/') ? targetPath : `${projectPath}/${targetPath}`
-  const normalizedProject = projectPath.replace(/\/$/, '')
-  const normalizedTarget = absoluteTarget.replace(/\/+/g, '/').replace(/\/$/, '')
-  return normalizedTarget === normalizedProject || normalizedTarget.startsWith(`${normalizedProject}/`)
+  const project = realpathSync.native(projectPath)
+  const candidate = isAbsolute(targetPath) ? targetPath : resolve(project, targetPath)
+  let target
+  try {
+    target = realpathSync.native(candidate)
+  } catch {
+    target = resolve(candidate)
+  }
+  const rel = relative(project, target)
+  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))
 }
 
 function dangerousShell(command) {
-  return DANGEROUS_COMMAND.test(command)
+  return DANGEROUS_COMMAND.test(command) || SENSITIVE_PATH.test(command) || /(^|[;&|\s])env\s*(?:$|[;&|])/i.test(command)
+}
+
+function sensitivePath(path) {
+  return SENSITIVE_PATH.test(path)
 }
 
 async function waitForPermission(requestId, toolName, args) {

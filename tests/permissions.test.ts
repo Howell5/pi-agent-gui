@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isDangerousShell, isInsideProject, isReadOnlyTool } from '../src/main/permissions'
+import { isDangerousShell, isInsideProject, isReadOnlyTool, isSensitivePath } from '../src/main/permissions'
 
 describe('project safety boundaries', () => {
   it('keeps relative paths inside the project', () => {
@@ -16,5 +16,11 @@ describe('project safety boundaries', () => {
   it('blocks obvious destructive shell commands', () => {
     expect(isDangerousShell('rm -rf build')).toBe(true)
     expect(isDangerousShell('pnpm test')).toBe(false)
+  })
+
+  it('blocks credential paths even inside the project', () => {
+    expect(isSensitivePath('.env')).toBe(true)
+    expect(isSensitivePath('src/app.ts')).toBe(false)
+    expect(isDangerousShell('cat ~/.ssh/id_rsa')).toBe(true)
   })
 })
