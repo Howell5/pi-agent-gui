@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tailwind's stylesheet lives one level below the source-owned UI registry. */
+@source "../components";
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -88,6 +91,7 @@ body {
   overflow: hidden;
   background: var(--background);
   color: var(--foreground);
+  font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -97,7 +101,7 @@ button,
 input,
 textarea,
 select {
-  font: inherit;
+  font-family: inherit;
 }
 
 button {
@@ -265,7 +269,14 @@ button:disabled {
 }
 
 .aui-composer-select {
-  width: min(230px, 32vw);
+  width: min(210px, 32vw);
+}
+
+.aui-composer-select [data-slot="select-value"] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .aui-composer-mode {

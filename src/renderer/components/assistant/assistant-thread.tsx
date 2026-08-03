@@ -240,6 +240,7 @@ function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEdi
   const aui = useAui()
   const running = useAuiState((state) => state.thread.isRunning)
   const canSend = useAuiState((state) => state.composer.canSend)
+  const selectedModel = modelOptions.find((model) => model.key === modelKey)
   async function attachFile() {
     const path = await onAttachFile()
     if (!path) return
@@ -250,8 +251,8 @@ function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEdi
     <ComposerPrimitive.Root className="aui-composer">
       <div className="aui-composer-toolbar">
         <Select value={modelKey} onValueChange={onModelChange} disabled={!settingsEditable || settingsSaving || !modelOptions.length}>
-          <SelectTrigger className="aui-composer-select"><SelectValue placeholder="先配置模型服务商" /></SelectTrigger>
-          <SelectContent>{modelOptions.map((model) => <SelectItem key={model.key} value={model.key}>{model.name}{model.providerName ? ` · ${model.providerName}` : ""}</SelectItem>)}</SelectContent>
+          <SelectTrigger className="aui-composer-select" title={selectedModel?.providerName ? `${selectedModel.name} · ${selectedModel.providerName}` : selectedModel?.name}><SelectValue placeholder="先配置模型服务商">{selectedModel?.name}</SelectValue></SelectTrigger>
+          <SelectContent>{modelOptions.map((model) => <SelectItem key={model.key} value={model.key}><span className="flex min-w-0 items-center gap-1.5"><span className="truncate">{model.name}</span>{model.providerName && <span className="shrink-0 text-xs text-muted-foreground">· {model.providerName}</span>}</span></SelectItem>)}</SelectContent>
         </Select>
         <Select value={permissionMode} onValueChange={(value) => onPermissionModeChange(value as PermissionMode)} disabled={!settingsEditable || settingsSaving}>
           <SelectTrigger className="aui-composer-mode"><SelectValue /></SelectTrigger>
