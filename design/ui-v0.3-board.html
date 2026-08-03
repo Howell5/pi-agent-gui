@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Heymoss · UI board v0.3</title>
+    <style>
+      :root {
+        --canvas: #eef1f5;
+        --surface: #f8fafc;
+        --surface-strong: #ffffff;
+        --surface-muted: #eef2f7;
+        --line: #dfe5ed;
+        --line-strong: #d2dae5;
+        --ink: #172033;
+        --ink-soft: #516077;
+        --ink-faint: #7e8ba0;
+        --accent: #2a5bd7;
+        --accent-soft: #e5ecfc;
+        --accent-ink: #1e46a9;
+        --warning: #c66d16;
+        --success: #16845b;
+        --danger: #b33a4f;
+        --radius-control: 8px;
+        --radius-panel: 12px;
+        --shadow-panel: 0 18px 44px rgb(24 39 75 / 9%);
+        --board-width: 1440px;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; }
+      body {
+        margin: 0;
+        min-width: 1060px;
+        overflow: hidden;
+        background: var(--canvas);
+        color: var(--ink);
+        font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      button, input, select, textarea { font: inherit; }
+      button { border: 0; cursor: pointer; }
+      button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+        outline: 3px solid rgb(42 91 215 / 22%);
+        outline-offset: 1px;
+      }
+
+      .board-shell { display: grid; grid-template-rows: 54px minmax(0, 1fr); height: 100vh; }
+      .board-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 0 18px;
+        border-bottom: 1px solid var(--line-strong);
+        background: #fff;
+      }
+      .board-brand, .toolbar-actions, .view-tabs, .viewport-tabs { display: flex; align-items: center; }
+      .board-brand { gap: 10px; min-width: 185px; }
+      .brand-mark { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 700; }
+      .board-brand strong { font-size: 13px; font-weight: 650; }
+      .board-brand small { display: block; margin-top: 1px; color: var(--ink-faint); font-size: 10px; }
+      .toolbar-actions { gap: 14px; }
+      .toolbar-label { color: var(--ink-faint); font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+      .view-tabs, .viewport-tabs { gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-muted); }
+      .view-tabs button, .viewport-tabs button { min-height: 27px; padding: 0 10px; border-radius: 6px; color: var(--ink-soft); background: transparent; font-size: 11px; }
+      .view-tabs button.active, .viewport-tabs button.active { color: var(--ink); background: #fff; box-shadow: 0 1px 3px rgb(35 48 75 / 10%); }
+
+      .board-main { display: grid; grid-template-columns: 204px minmax(0, 1fr); min-height: 0; }
+      .board-nav { min-height: 0; padding: 22px 12px; border-right: 1px solid var(--line-strong); background: #f5f7fa; }
+      .board-nav h2 { margin: 0 8px 12px; color: var(--ink-faint); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+      .board-nav button { display: flex; width: 100%; min-height: 36px; align-items: center; gap: 9px; margin: 2px 0; padding: 0 10px; border-radius: 8px; color: var(--ink-soft); background: transparent; font-size: 12px; text-align: left; }
+      .board-nav button:hover, .board-nav button.active { color: var(--ink); background: #e7edf7; }
+      .board-nav .nav-mark { width: 17px; color: var(--ink-faint); text-align: center; }
+      .board-nav .nav-note { margin: 20px 8px 0; color: var(--ink-faint); font-size: 10px; line-height: 1.6; }
+      .board-stage { min-width: 0; min-height: 0; overflow: auto; padding: 22px; background: var(--canvas); }
+      .stage-caption { display: flex; align-items: center; justify-content: space-between; width: min(var(--board-width), 100%); margin: 0 auto 8px; color: var(--ink-faint); font-size: 10px; }
+      .stage-caption strong { color: var(--ink-soft); font-weight: 600; }
+      .artboard { display: none; width: min(var(--board-width), 100%); height: calc(100vh - 120px); min-height: 720px; margin: 0 auto; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-panel); }
+      .artboard.active { display: flex; }
+
+      /* Shared app frame */
+      .app-frame { display: flex; width: 100%; height: 100%; flex-direction: column; }
+      .app-topbar { display: flex; height: 48px; flex: 0 0 auto; align-items: center; justify-content: space-between; padding: 0 14px; border-bottom: 1px solid var(--line); background: rgb(255 255 255 / 92%); }
+      .app-brand { display: flex; align-items: center; gap: 9px; font-weight: 650; }
+      .app-brand .brand-mark { width: 30px; height: 30px; }
+      .app-actions { display: flex; gap: 2px; }
+      .icon-button { display: inline-grid; width: 30px; height: 30px; place-items: center; border-radius: 7px; color: var(--ink-soft); background: transparent; font-size: 15px; }
+      .icon-button:hover { color: var(--ink); background: var(--surface-muted); }
+      .app-body { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 0; flex: 1; }
+      .sidebar { display: flex; min-height: 0; flex-direction: column; border-right: 1px solid var(--line); background: #f2f4f7; }
+      .sidebar-head { display: flex; height: 40px; flex: 0 0 auto; align-items: center; justify-content: space-between; padding: 0 12px 0 15px; color: var(--ink-faint); font-size: 11px; font-weight: 650; letter-spacing: .13em; text-transform: uppercase; }
+      .sidebar-scroll { min-height: 0; flex: 1; overflow: auto; padding: 5px 8px 18px; }
+      .sidebar-section { display: flex; min-height: 30px; align-items: center; justify-content: space-between; padding: 0 8px; color: var(--ink-faint); font-size: 11px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; }
+      .sidebar-section-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 150ms ease; }
+      .sidebar-section:hover .sidebar-section-actions { opacity: 1; }
+      .tiny-button { display: inline-grid; width: 22px; height: 22px; place-items: center; border-radius: 6px; color: var(--ink-faint); background: transparent; }
+      .tiny-button:hover { color: var(--ink); background: #dfe6f0; }
+      .project { margin-bottom: 5px; }
+      .project-row, .session-row { display: flex; width: 100%; align-items: center; border-radius: var(--radius-control); color: var(--ink); text-align: left; }
+      .project-row { min-height: 34px; gap: 7px; padding: 0 7px; background: transparent; }
+      .project-row:hover, .project-row.active, .session-row:hover, .session-row.active { background: var(--accent-soft); }
+      .project-row .disclosure { width: 13px; color: var(--ink-faint); }
+      .project-row .folder { color: var(--ink-soft); font-size: 15px; }
+      .project-name, .session-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .project-name { flex: 1; font-size: 13px; font-weight: 620; }
+      .row-actions { display: flex; gap: 1px; margin-left: auto; opacity: 0; transition: opacity 150ms ease; }
+      .project-row:hover .row-actions, .session-row:hover .row-actions { opacity: 1; }
+      .sessions { margin: 1px 0 5px 21px; padding: 2px 0 1px 10px; border-left: 1px solid var(--line-strong); }
+      .session-label { padding: 3px 8px; color: var(--ink-faint); font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+      .session-row { min-height: 30px; gap: 7px; padding: 0 7px; }
+      .session-title { flex: 1; font-size: 12px; font-weight: 560; }
+      .status-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #9aa7ba; }
+      .status-dot.idle { background: var(--accent); }
+      .status-dot.running { border: 1.5px solid var(--accent); border-top-color: transparent; background: transparent; animation: spin 800ms linear infinite; }
+      .status-dot.waiting { background: var(--warning); }
+      .sidebar-foot { padding: 10px 12px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 10px; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .workspace { display: flex; min-width: 0; min-height: 0; flex-direction: column; background: var(--surface); }
+      .workspace-head { display: flex; min-height: 58px; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 18px; padding: 9px 24px; border-bottom: 1px solid var(--line); }
+      .context { min-width: 0; }
+      .context-label { margin-bottom: 2px; color: var(--ink-faint); font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+      .context h1 { margin: 0; overflow: hidden; font-size: 16px; font-weight: 640; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+      .workspace-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
+      .status { display: inline-flex; min-height: 25px; align-items: center; padding: 0 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-soft); background: #fff; font-size: 11px; font-weight: 600; }
+      .status.running { color: var(--warning); }
+      .status.waiting { color: var(--danger); }
+      .quiet-button, .primary-button { display: inline-flex; min-height: 32px; align-items: center; gap: 6px; padding: 0 10px; border-radius: var(--radius-control); font-size: 12px; font-weight: 600; }
+      .quiet-button { color: var(--ink-soft); background: transparent; }
+      .quiet-button:hover { color: var(--ink); background: var(--surface-muted); }
+      .primary-button { color: #fff; background: var(--accent); }
+      .primary-button:hover { background: var(--accent-ink); }
+      .chat-scroll { min-height: 0; flex: 1; overflow: auto; }
+      .message-column { width: min(820px, calc(100% - 56px)); margin: 0 auto; padding: 30px 0 24px; }
+      .message { margin: 0 0 22px; }
+      .message-meta { margin: 0 0 6px; color: var(--ink-faint); font-size: 11px; font-weight: 600; }
+      .message.user { padding-left: 16%; text-align: right; }
+      .message.user .message-meta { text-align: right; }
+      .user-bubble { display: inline-block; max-width: 100%; padding: 10px 13px; border-radius: 12px 12px 3px 12px; color: var(--ink); background: var(--accent-soft); text-align: left; line-height: 1.55; }
+      .assistant-copy { color: #28354b; line-height: 1.7; }
+      .assistant-copy p { margin: 0 0 10px; }
+      .assistant-copy strong { color: var(--ink); font-weight: 650; }
+      .inline-code { padding: 2px 5px; border-radius: 5px; color: #ad2352; background: #f9e8f0; font: .9em ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .activity { margin: 0 0 18px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .activity summary { display: flex; min-height: 38px; align-items: center; gap: 8px; cursor: pointer; color: var(--ink-soft); list-style: none; user-select: none; }
+      .activity summary::-webkit-details-marker { display: none; }
+      .activity summary::before { content: "›"; color: var(--ink-faint); font-size: 19px; line-height: 1; transition: transform 150ms ease; }
+      .activity[open] summary::before { transform: rotate(90deg); }
+      .activity-time { font-size: 12px; font-weight: 560; }
+      .activity-labels { overflow: hidden; color: var(--ink-faint); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .activity-body { display: grid; gap: 2px; padding: 0 0 9px 22px; }
+      .tool-row { display: flex; min-height: 23px; align-items: center; gap: 7px; padding: 2px 0; color: var(--ink-faint); font-size: 11px; }
+      .tool-row strong { color: var(--ink-soft); font-weight: 600; }
+      .tool-row small { min-width: 0; overflow: hidden; color: var(--ink-faint); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
+      .tool-icon { width: 15px; color: #9aa7ba; text-align: center; }
+      .tool-count { display: inline-flex; min-width: 17px; height: 17px; align-items: center; justify-content: center; padding: 0 5px; border-radius: 999px; color: var(--ink-faint); background: var(--surface-muted); font-size: 10px; }
+      .approval-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 14px 0 18px; padding: 10px 12px; border-left: 3px solid var(--warning); color: var(--ink-soft); background: #fff8ed; font-size: 12px; }
+      .approval-bar strong { color: var(--ink); font-weight: 650; }
+      .approval-actions { display: flex; gap: 5px; flex: 0 0 auto; }
+      .approval-actions button { min-height: 27px; padding: 0 9px; border-radius: 6px; font-size: 11px; }
+      .approval-actions .allow { color: #fff; background: var(--accent); }
+      .approval-actions .deny { color: var(--danger); background: transparent; }
+      .composer-dock { flex: 0 0 auto; padding: 10px 28px 22px; border-top: 1px solid var(--line); background: var(--surface); }
+      .composer { display: grid; width: min(820px, 100%); min-height: 116px; margin: 0 auto; padding: 10px 11px 9px; border: 1px solid var(--line-strong); border-radius: var(--radius-panel); background: #fff; box-shadow: var(--shadow-panel); }
+      .composer-tools { display: flex; align-items: center; gap: 6px; }
+      .composer select { height: 32px; padding: 0 25px 0 9px; border: 1px solid var(--line); border-radius: var(--radius-control); color: var(--ink); background: var(--surface); font-size: 12px; }
+      .composer select.model { width: 190px; }
+      .composer select.mode { width: 76px; }
+      .file-chip { display: inline-flex; min-height: 27px; align-items: center; gap: 5px; padding: 0 8px; border-radius: 6px; color: var(--ink-soft); background: var(--surface-muted); font-size: 11px; }
+      .composer-spacer { flex: 1; }
+      .send-button { display: inline-grid; width: 32px; height: 32px; place-items: center; border-radius: 8px; color: #fff; background: var(--accent); font-size: 16px; }
+      .composer textarea { width: 100%; min-height: 55px; resize: none; padding: 10px 2px 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 13px; line-height: 1.5; }
+      .composer textarea::placeholder { color: var(--ink-faint); }
+
+      /* Inbox */
+      .inbox-frame { display: grid; grid-template-columns: 252px minmax(0, 1fr) 300px; width: 100%; height: 100%; }
+      .inbox-side { display: flex; min-height: 0; flex-direction: column; border-right: 1px solid var(--line); background: #f2f4f7; }
+      .inbox-side-head { display: flex; height: 49px; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); }
+      .inbox-side-head strong { font-size: 14px; }
+      .inbox-side-list { padding: 14px 10px; }
+      .filter-row { display: flex; align-items: center; justify-content: space-between; min-height: 34px; padding: 0 9px; border-radius: 7px; color: var(--ink-soft); font-size: 12px; }
+      .filter-row.active, .filter-row:hover { color: var(--ink); background: var(--accent-soft); }
+      .filter-row span:last-child { color: var(--ink-faint); font-size: 11px; }
+      .inbox-list { min-width: 0; min-height: 0; overflow: auto; background: var(--surface); }
+      .inbox-head { display: flex; min-height: 74px; align-items: end; justify-content: space-between; padding: 0 24px 14px; border-bottom: 1px solid var(--line); }
+      .inbox-head h1 { margin: 0; font-size: 20px; font-weight: 640; letter-spacing: -.03em; }
+      .search { width: 210px; height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; font-size: 12px; }
+      .session-list { padding: 8px 14px 24px; }
+      .session-card { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto; gap: 11px; align-items: center; min-height: 72px; padding: 10px; border-bottom: 1px solid var(--line); }
+      .session-card:hover, .session-card.selected { background: #f1f5fb; }
+      .session-card h3 { margin: 0; overflow: hidden; font-size: 13px; font-weight: 620; text-overflow: ellipsis; white-space: nowrap; }
+      .session-card p { margin: 3px 0 0; overflow: hidden; color: var(--ink-faint); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .session-meta { display: grid; justify-items: end; gap: 4px; color: var(--ink-faint); font-size: 10px; }
+      .session-meta .model-label { max-width: 115px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .session-preview { min-width: 0; min-height: 0; overflow: auto; border-left: 1px solid var(--line); background: #fff; }
+      .preview-head { padding: 20px 18px 15px; border-bottom: 1px solid var(--line); }
+      .preview-head small { color: var(--ink-faint); font-size: 10px; }
+      .preview-head h2 { margin: 6px 0 0; font-size: 15px; font-weight: 650; }
+      .preview-body { padding: 16px 18px; }
+      .preview-section { margin-bottom: 18px; }
+      .preview-section h4 { margin: 0 0 7px; color: var(--ink-faint); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+      .preview-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: 11px; }
+      .preview-row strong { color: var(--ink); font-weight: 600; text-align: right; }
+
+      /* Provider settings */
+      .settings-frame { display: grid; grid-template-columns: 250px minmax(0, 1fr); width: 100%; height: 100%; background: var(--surface); }
+      .settings-nav { padding: 23px 12px; border-right: 1px solid var(--line); background: #f2f4f7; }
+      .settings-nav h1 { margin: 0 10px 3px; font-size: 17px; font-weight: 650; }
+      .settings-nav p { margin: 0 10px 20px; color: var(--ink-faint); font-size: 11px; }
+      .provider-nav { display: flex; align-items: center; gap: 9px; min-height: 42px; margin: 2px 0; padding: 0 10px; border-radius: 8px; color: var(--ink-soft); background: transparent; text-align: left; }
+      .provider-nav:hover, .provider-nav.active { color: var(--ink); background: var(--accent-soft); }
+      .provider-logo { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 8px; color: #fff; background: #20324e; font-size: 11px; font-weight: 700; }
+      .provider-nav .provider-copy { min-width: 0; flex: 1; }
+      .provider-nav strong, .provider-nav small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .provider-nav strong { font-size: 12px; font-weight: 620; }
+      .provider-nav small { margin-top: 1px; color: var(--ink-faint); font-size: 10px; }
+      .configured-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+      .settings-content { min-width: 0; overflow: auto; padding: 30px 42px 48px; }
+      .settings-content > * { width: min(720px, 100%); margin-right: auto; margin-left: auto; }
+      .settings-kicker { margin: 0 0 5px; color: var(--ink-faint); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+      .settings-content h2 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -.03em; }
+      .settings-lead { margin: 7px 0 24px; color: var(--ink-soft); font-size: 12px; }
+      .form-section { margin-top: 24px; }
+      .form-section h3 { margin: 0 0 8px; font-size: 12px; font-weight: 650; }
+      .field-label { display: block; margin: 12px 0 5px; color: var(--ink-soft); font-size: 11px; font-weight: 600; }
+      .text-field { width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; font-size: 12px; }
+      .field-help { margin: 5px 0 0; color: var(--ink-faint); font-size: 10px; }
+      .model-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+      .model-item { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-soft); background: #fff; font-size: 11px; }
+      .model-item strong { color: var(--ink); font-weight: 600; }
+      .model-item small { display: block; margin-top: 2px; color: var(--ink-faint); font-size: 9px; }
+      .model-check { color: var(--success); font-size: 13px; }
+      .form-actions { display: flex; align-items: center; gap: 10px; margin-top: 22px; }
+      .connection-state { color: var(--success); font-size: 11px; }
+      .custom-note { margin-top: 20px; padding: 10px 12px; border-left: 3px solid var(--line-strong); color: var(--ink-soft); background: var(--surface-muted); font-size: 11px; line-height: 1.55; }
+
+      /* Context / skills */
+      .context-frame { display: grid; grid-template-columns: 252px minmax(0, 1fr); width: 100%; height: 100%; background: var(--surface); }
+      .context-nav { padding: 22px 12px; border-right: 1px solid var(--line); background: #f2f4f7; }
+      .context-nav h1 { margin: 0 10px 4px; font-size: 17px; font-weight: 650; }
+      .context-nav p { margin: 0 10px 18px; color: var(--ink-faint); font-size: 11px; line-height: 1.5; }
+      .context-link { display: flex; min-height: 34px; align-items: center; gap: 8px; margin: 2px 0; padding: 0 10px; border-radius: 7px; color: var(--ink-soft); background: transparent; font-size: 12px; text-align: left; }
+      .context-link:hover, .context-link.active { color: var(--ink); background: var(--accent-soft); }
+      .context-content { min-width: 0; overflow: auto; padding: 30px 42px 48px; }
+      .context-content > * { width: min(800px, 100%); margin-right: auto; margin-left: auto; }
+      .context-content h2 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -.03em; }
+      .context-lead { margin: 7px 0 26px; color: var(--ink-soft); font-size: 12px; }
+      .context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      .context-panel { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+      .context-panel.wide { grid-column: 1 / -1; }
+      .context-panel-head { display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+      .context-panel h3 { margin: 0; font-size: 13px; font-weight: 650; }
+      .context-panel p { margin: 3px 0 0; color: var(--ink-faint); font-size: 10px; }
+      .list-row { display: flex; min-height: 41px; align-items: center; gap: 9px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 11px; }
+      .list-row:first-child { border-top: 0; }
+      .list-row strong { color: var(--ink); font-weight: 600; }
+      .list-row small { display: block; margin-top: 1px; color: var(--ink-faint); font-size: 10px; }
+      .list-row .row-tail { margin-left: auto; color: var(--ink-faint); font-size: 10px; }
+      .empty-slot { display: grid; min-height: 92px; place-items: center; border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--ink-faint); font-size: 11px; text-align: center; }
+      .rule-note { margin-top: 16px; color: var(--ink-faint); font-size: 10px; line-height: 1.6; }
+
+      @media (max-width: 1120px) {
+        .board-main { grid-template-columns: 180px minmax(0, 1fr); }
+        .inbox-frame { grid-template-columns: 210px minmax(0, 1fr); }
+        .session-preview { display: none; }
+        .board-nav { padding-inline: 8px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board-shell">
+      <header class="board-toolbar">
+        <div class="board-brand"><span class="brand-mark">H</span><div><strong>Heymoss UI board</strong><small>v0.3 · large capability surfaces</small></div></div>
+        <div class="toolbar-actions">
+          <span class="toolbar-label">Screen</span>
+          <div class="view-tabs" role="tablist" aria-label="设计稿页面">
+            <button class="active" data-view="workbench" type="button">工作台</button>
+            <button data-view="inbox" type="button">会话收件箱</button>
+            <button data-view="providers" type="button">模型服务</button>
+            <button data-view="context" type="button">上下文</button>
+          </div>
+          <span class="toolbar-label">Viewport</span>
+          <div class="viewport-tabs" role="tablist" aria-label="设计稿尺寸">
+            <button class="active" data-width="1440px" type="button">1440</button>
+            <button data-width="1280px" type="button">1280</button>
+            <button data-width="1024px" type="button">1024</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="board-main">
+        <nav class="board-nav" aria-label="设计稿目录">
+          <h2>Prototype set</h2>
+          <button class="active" data-view="workbench" type="button"><span class="nav-mark">◈</span>工作台 / 对话</button>
+          <button data-view="inbox" type="button"><span class="nav-mark">≡</span>会话收件箱</button>
+          <button data-view="providers" type="button"><span class="nav-mark">⌁</span>模型与 Provider</button>
+          <button data-view="context" type="button"><span class="nav-mark">⊙</span>上下文与技能</button>
+          <p class="nav-note">同一套 tokens 和间距。进入 Electron 时，布局转为 React，交互转为 Radix/ai-elements。</p>
+        </nav>
+
+        <section class="board-stage">
+          <div class="stage-caption"><span>Design contract · <strong id="stage-title">核心工作台</strong></span><span>主稿 1440 × 1024 · 最小验收 1024 × 768</span></div>
+
+          <section class="artboard active" data-screen="workbench" aria-label="工作台设计稿">
+            <div class="app-frame">
+              <header class="app-topbar"><div class="app-brand"><span class="brand-mark">H</span><span>Heymoss</span></div><div class="app-actions"><button class="icon-button" type="button" title="模型服务">⌁</button><button class="icon-button" type="button" title="打开项目">□</button><button class="icon-button" type="button" title="切换侧栏">◧</button></div></header>
+              <div class="app-body">
+                <aside class="sidebar">
+                  <div class="sidebar-head"><span>项目</span><button class="icon-button" type="button" title="打开项目">＋</button></div>
+                  <div class="sidebar-scroll">
+                    <div class="sidebar-section"><span>Projects</span><span class="sidebar-section-actions"><button class="tiny-button" type="button">…</button><button class="tiny-button" type="button">＋</button></span></div>
+                    <section class="project"><div class="project-row active"><span class="disclosure">⌄</span><span class="folder">□</span><span class="project-name">berryon</span><span class="row-actions"><button class="tiny-button" type="button">…</button><button class="tiny-button" type="button">＋</button></span></div><div class="sessions"><div class="session-label">会话</div><div class="session-row active"><span class="session-title">修复 Agent 对话渲染</span><span class="status-dot idle" title="空闲"></span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div><div class="session-row"><span class="session-title">检查项目结构</span><span class="status-dot running" title="运行中"></span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div><div class="session-row"><span class="session-title">整理输入组件</span><span class="status-dot waiting" title="等待授权"></span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></div></section>
+                    <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">pi-agent-gui</span><span class="row-actions"><button class="tiny-button" type="button">…</button><button class="tiny-button" type="button">＋</button></span></div></section>
+                  </div>
+                  <div class="sidebar-foot">项目是本地文件夹；Git 和 Worktree 不进入主导航。</div>
+                </aside>
+                <main class="workspace">
+                  <header class="workspace-head"><div class="context"><div class="context-label">berryon</div><h1>修复 Agent 对话渲染</h1></div><div class="workspace-actions"><span class="status">空闲</span><button class="quiet-button" type="button">＋ 新会话</button></div></header>
+                  <section class="chat-scroll" aria-label="会话消息"><div class="message-column">
+                    <article class="message user"><div class="message-meta">你</div><div class="user-bubble">把工具调用的展示改成更紧凑的 Codex 风格，并检查空结果是否真的来自协议。</div></article>
+                    <article class="message"><div class="assistant-copy"><p>我会先检查消息协议和工具事件，再确认 UI 是否遗漏了参数与输出。</p></div></article>
+                    <details class="activity"><summary><span class="activity-time">Worked for 2m 18s</span><span class="activity-labels">Edited files · Read files · Ran commands</span></summary><div class="activity-body"><div class="tool-row"><span class="tool-icon">⌘</span><strong>ls</strong><span class="tool-count">6</span><small>src/, tests/, scripts/, package.json, README.md</small></div><div class="tool-row"><span class="tool-icon">⌕</span><strong>read</strong><span class="tool-count">4</span><small>assistant-thread.tsx, tool.tsx, store.ts, types.ts</small></div><div class="tool-row"><span class="tool-icon">✎</span><strong>edit</strong><small>src/components/ai-elements/tool.tsx</small></div></div></details>
+                    <article class="message"><div class="assistant-copy"><p>协议里确实有参数和输出；之前的问题是渲染层把它们放进了默认收起的活动区。现在保留摘要，详情按需展开。</p><p><strong>设计规则：</strong>完成状态不放勾选图标；只有运行中的文字使用流动光效。</p></div></article>
+                    <div class="approval-bar"><div><strong>需要授权</strong><br />将运行 <code class="inline-code">pnpm test</code>，只访问当前项目目录。</div><div class="approval-actions"><button class="deny" type="button">拒绝</button><button class="allow" type="button">允许</button></div></div>
+                  </div></section>
+                  <footer class="composer-dock"><form class="composer"><div class="composer-tools"><select class="model" aria-label="模型"><option>DeepSeek V4 Pro</option><option>DeepSeek V4 Flash</option><option>OpenAI GPT-5</option></select><select class="mode" aria-label="权限模式"><option>Ask</option><option>Auto</option></select><span class="file-chip">⌕ SPEC.md ×</span><span class="composer-spacer"></span><button class="send-button" type="button">➤</button></div><textarea placeholder="让 Agent 在这个项目里做什么？" aria-label="输入消息"></textarea></form></footer>
+                </main>
+              </div>
+            </div>
+          </section>
+
+          <section class="artboard" data-screen="inbox" aria-label="会话收件箱设计稿">
+            <div class="inbox-frame">
+              <aside class="inbox-side"><div class="inbox-side-head"><strong>会话</strong><button class="icon-button" type="button">＋</button></div><div class="inbox-side-list"><div class="filter-row active"><span>全部会话</span><span>12</span></div><div class="filter-row"><span>运行中</span><span>2</span></div><div class="filter-row"><span>需要授权</span><span>1</span></div><div class="filter-row"><span>已完成</span><span>9</span></div><div class="filter-row"><span>已归档</span><span>24</span></div></div></aside>
+              <main class="inbox-list"><header class="inbox-head"><h1>全部会话</h1><input class="search" placeholder="搜索会话" aria-label="搜索会话" /></header><div class="session-list"><article class="session-card selected"><span class="status-dot idle"></span><div><h3>修复 Agent 对话渲染</h3><p>berryon · 完成协议排查和工具摘要调整</p></div><div class="session-meta"><span>刚刚</span><span class="model-label">DeepSeek V4 Pro</span></div></article><article class="session-card"><span class="status-dot running"></span><div><h3>检查项目结构</h3><p>pi-agent-gui · 正在读取文件和运行测试</p></div><div class="session-meta"><span>2m</span><span class="model-label">OpenAI GPT-5</span></div></article><article class="session-card"><span class="status-dot waiting"></span><div><h3>整理输入组件</h3><p>berryon · 等待授权运行 pnpm test</p></div><div class="session-meta"><span>18m</span><span class="model-label">DeepSeek V4 Flash</span></div></article><article class="session-card"><span class="status-dot"></span><div><h3>增加 Provider 配置说明</h3><p>pi-agent-gui · 已完成</p></div><div class="session-meta"><span>昨天</span><span class="model-label">DeepSeek V4 Pro</span></div></article></div></main>
+              <aside class="session-preview"><div class="preview-head"><small>berryon / 修复 Agent 对话渲染</small><h2>会话概览</h2></div><div class="preview-body"><section class="preview-section"><h4>状态</h4><div class="preview-row"><span>当前状态</span><strong>空闲</strong></div><div class="preview-row"><span>权限模式</span><strong>Ask</strong></div><div class="preview-row"><span>模型</span><strong>DeepSeek V4 Pro</strong></div></section><section class="preview-section"><h4>最近工作</h4><div class="preview-row"><span>运行时长</span><strong>2m 18s</strong></div><div class="preview-row"><span>工具事件</span><strong>13</strong></div><div class="preview-row"><span>最后更新</span><strong>刚刚</strong></div></section><button class="primary-button" type="button">打开会话</button></div></aside>
+            </div>
+          </section>
+
+          <section class="artboard" data-screen="providers" aria-label="模型服务设计稿">
+            <div class="settings-frame">
+              <aside class="settings-nav"><h1>模型服务</h1><p>Provider 只在这里配置；对话里只选模型。</p><button class="provider-nav active" type="button"><span class="provider-logo">DS</span><span class="provider-copy"><strong>DeepSeek</strong><small>2 个模型 · 已配置</small></span><span class="configured-dot"></span></button><button class="provider-nav" type="button"><span class="provider-logo">O</span><span class="provider-copy"><strong>OpenAI</strong><small>3 个模型 · 未配置</small></span></button><button class="provider-nav" type="button"><span class="provider-logo">＋</span><span class="provider-copy"><strong>自定义 Provider</strong><small>OpenAI-compatible</small></span></button></aside>
+              <main class="settings-content"><p class="settings-kicker">Provider / DeepSeek</p><h2>DeepSeek</h2><p class="settings-lead">Base URL、协议和模型目录由目录提供；这里只需要凭证。</p><section class="form-section"><h3>API Token</h3><label class="field-label" for="token">Token</label><input class="text-field" id="token" type="password" value="sk-••••••••••••••••" /><p class="field-help">保存在本地凭证存储；不会写入项目文件夹。</p><div class="form-actions"><button class="primary-button" type="button">保存 Token</button><span class="connection-state">● 已连接 · 上次测试刚刚</span></div></section><section class="form-section"><h3>可用模型</h3><div class="model-list"><div class="model-item"><div><strong>DeepSeek V4 Pro</strong><small>推理 · 128K context</small></div><span class="model-check">●</span></div><div class="model-item"><div><strong>DeepSeek V4 Flash</strong><small>快速 · 64K context</small></div><span class="model-check">●</span></div></div></section><section class="form-section"><h3>自定义 Provider</h3><div class="custom-note">只有在使用其他 OpenAI-compatible 服务时才填写 Base URL 和模型 ID。日常会话仍然只显示扁平模型列表。</div></section></main>
+            </div>
+          </section>
+
+          <section class="artboard" data-screen="context" aria-label="上下文与技能设计稿">
+            <div class="context-frame">
+              <aside class="context-nav"><h1>项目上下文</h1><p>把会话需要长期理解的规则放在项目层，而不是每次重复输入。</p><button class="context-link active" type="button"><span>⌁</span>项目说明</button><button class="context-link" type="button"><span>✦</span>Skills</button><button class="context-link" type="button"><span>⌕</span>Sources / MCP</button><button class="context-link" type="button"><span>□</span>附件与引用</button></aside>
+              <main class="context-content"><p class="settings-kicker">Project / berryon</p><h2>项目上下文</h2><p class="context-lead">这是未来的 Context 层：先服务 Pi Agent，不把 Git、Worktree 或 Changes 变成产品入口。</p><div class="context-grid"><section class="context-panel wide"><div class="context-panel-head"><div><h3>项目说明</h3><p>每个 Session 默认继承，可在会话中临时覆盖。</p></div><button class="quiet-button" type="button">编辑</button></div><div class="list-row"><span>📄</span><div><strong>AGENTS.md</strong><small>编码规范、测试命令、目录边界</small></div><span class="row-tail">已启用</span></div><div class="list-row"><span>📄</span><div><strong>PROJECT.md</strong><small>产品背景和长期约束</small></div><span class="row-tail">已启用</span></div></section><section class="context-panel"><div class="context-panel-head"><div><h3>Skills</h3><p>可复用的工作方式</p></div><button class="tiny-button" type="button">＋</button></div><div class="list-row"><span>✦</span><div><strong>release-check</strong><small>发布前检查和验证</small></div><span class="row-tail">启用</span></div><div class="list-row"><span>✦</span><div><strong>ui-review</strong><small>界面截图与验收</small></div><span class="row-tail">启用</span></div></section><section class="context-panel"><div class="context-panel-head"><div><h3>Sources / MCP</h3><p>外部工具和数据源</p></div><button class="tiny-button" type="button">＋</button></div><div class="empty-slot">尚未连接 Source<br />先支持本地和只读连接</div></section><section class="context-panel wide"><div class="context-panel-head"><div><h3>附件与引用</h3><p>对话中的 @file 最终会沉淀为可复用上下文。</p></div><button class="quiet-button" type="button">添加文件</button></div><div class="list-row"><span>⌕</span><div><strong>SPEC.md</strong><small>当前会话引用 · 24 KB</small></div><span class="row-tail">移除</span></div></section></div><p class="rule-note">设计边界：Skills、Sources、MCP 属于下一阶段的大模块；不在当前 0.2.x 里偷偷塞入半成品按钮。</p></main>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const stageTitle = document.getElementById('stage-title');
+      const titles = { workbench: '核心工作台', inbox: '会话收件箱', providers: '模型与 Provider', context: '上下文与技能' };
+      const setView = (view) => {
+        document.querySelectorAll('[data-view]').forEach((button) => button.classList.toggle('active', button.dataset.view === view));
+        document.querySelectorAll('.artboard').forEach((screen) => screen.classList.toggle('active', screen.dataset.screen === view));
+        stageTitle.textContent = titles[view];
+      };
+      document.querySelectorAll('[data-view]').forEach((button) => button.addEventListener('click', () => setView(button.dataset.view)));
+      document.querySelectorAll('[data-width]').forEach((button) => button.addEventListener('click', () => {
+        document.documentElement.style.setProperty('--board-width', button.dataset.width);
+        document.querySelectorAll('[data-width]').forEach((item) => item.classList.toggle('active', item === button));
+      }));
+    </script>
+  </body>
+</html>
