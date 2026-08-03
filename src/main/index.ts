@@ -358,6 +358,22 @@ function registerIpc(): void {
     return task
   })
 
+  ipcMain.handle('app:updateTaskSettings', (_event, input: { taskId: string; modelKey?: string; permissionMode?: PermissionMode }) => {
+    const task = store.findTask(input.taskId)
+    if (!task) throw new Error('Task not found')
+    if (task.status === 'running' || task.status === 'waiting_approval') throw new Error('Cannot change settings while the session is running')
+    if (input.modelKey) {
+      const selectedModel = parseModelKey(input.modelKey)
+      const providerView = buildProviderViews(store, secrets).find((provider) => provider.id === selectedModel.providerId)
+      if (!providerView?.models.some((model) => model.modelId === selectedModel.modelId)) throw new Error('Selected model is unavailable')
+      task.selectedModel = selectedModel
+    }
+    if (input.permissionMode) task.permissionMode = input.permissionMode
+    updateTask(task)
+    broadcast()
+    return task
+  })
+
   ipcMain.handle('app:sendMessage', (_event, input: { taskId: string; text: string }) => {
     const task = store.findTask(input.taskId)
     const text = input.text.trim()

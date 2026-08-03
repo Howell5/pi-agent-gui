@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { Brain, ChevronDown, ChevronRight, FilePenLine, FileSearch, FileText, FolderOpen, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, Plug, Send, Square, Terminal, X } from 'lucide-react'
+import { Brain, ChevronDown, ChevronRight, FilePenLine, FileSearch, FileText, Folder, FolderOpen, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, Plug, Send, Square, Terminal, X } from 'lucide-react'
 import type { AppSnapshot, PermissionMode, ProviderView, Task, UiMessage } from '@shared/types'
 import { MarkdownMessage } from './MarkdownMessage'
 
@@ -228,6 +228,8 @@ export function App() {
   const [input, setInput] = useState('')
   const [providerOpen, setProviderOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
+  const [settingsSaving, setSettingsSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -238,6 +240,7 @@ export function App() {
       setDraft(!task)
       setModelKey(task ? taskModelKey(task) : firstModel(value))
       setPermissionMode(task?.permissionMode ?? 'ask')
+      if (value.activeProjectId) setExpandedProjects(new Set([value.activeProjectId]))
     })
     return window.appApi.onSnapshot((value) => {
       setSnapshot(value)
@@ -245,7 +248,6 @@ export function App() {
   }, [])
 
   const activeProject = snapshot?.projects.find((project) => project.id === snapshot.activeProjectId) ?? null
-  const projectTasks = useMemo(() => snapshot?.tasks.filter((task) => task.projectId === activeProject?.id) ?? [], [snapshot, activeProject?.id])
   const activeTask = snapshot?.tasks.find((task) => task.id === activeTaskId) ?? null
   const modelOptions = snapshot?.providers.flatMap((provider) => provider.models) ?? []
 
@@ -260,6 +262,7 @@ export function App() {
     setDraft(!task)
     setModelKey(task ? taskModelKey(task) : firstModel(value))
     setPermissionMode(task?.permissionMode ?? 'ask')
+    if (projectId) setExpandedProjects((current) => new Set(current).add(projectId))
   }
 
   function selectTask(task: Task): void {
@@ -290,6 +293,19 @@ export function App() {
     }
   }
 
+  function toggleProject(projectId: string): void {
+    if (projectId !== activeProject?.id) {
+      void selectProject(projectId)
+      return
+    }
+    setExpandedProjects((current) => {
+      const next = new Set(current)
+      if (next.has(projectId)) next.delete(projectId)
+      else next.add(projectId)
+      return next
+    })
+  }
+
   function newTask() {
     const defaultTask = activeTask
     setActiveTaskId(null)
@@ -297,6 +313,35 @@ export function App() {
     setPermissionMode(defaultTask?.permissionMode ?? permissionMode)
     setInput('')
     setModelKey(defaultTask ? taskModelKey(defaultTask) : modelKey || firstModel(snapshot))
+  }
+
+  const settingsEditable = draft || activeTask?.status === 'idle' || activeTask?.status === 'failed'
+
+  async function saveTaskSettings(input: { modelKey?: string; permissionMode?: PermissionMode }, previous: { modelKey: string; permissionMode: PermissionMode }): Promise<void> {
+    if (!activeTaskId || draft) return
+    setSettingsSaving(true)
+    try {
+      const updatedTask = await window.appApi.updateTaskSettings({ taskId: activeTaskId, ...input })
+      setSnapshot((current) => current ? { ...current, tasks: current.tasks.map((task) => task.id === updatedTask.id ? updatedTask : task) } : current)
+    } catch (cause) {
+      setModelKey(previous.modelKey)
+      setPermissionMode(previous.permissionMode)
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
+
+  function changeModel(nextModelKey: string): void {
+    const previous = { modelKey, permissionMode }
+    setModelKey(nextModelKey)
+    void saveTaskSettings({ modelKey: nextModelKey }, previous)
+  }
+
+  function changePermissionMode(nextPermissionMode: PermissionMode): void {
+    const previous = { modelKey, permissionMode }
+    setPermissionMode(nextPermissionMode)
+    void saveTaskSettings({ permissionMode: nextPermissionMode }, previous)
   }
 
   async function send() {
@@ -355,20 +400,26 @@ export function App() {
           <div className="sidebar-heading"><span>项目</span><button className="icon-button small-button" onClick={() => void openProject()}><FolderOpen size={15} /></button></div>
           {!snapshot.projects.length && <div className="empty-sidebar">打开一个本地文件夹开始。</div>}
           {snapshot.projects.map((project) => (
-              <button key={project.id} className={`project-row ${project.id === activeProject?.id ? 'selected' : ''}`} onClick={() => void selectProject(project.id)}>
-              <span className="project-dot" />
-              <span><strong>{project.displayName}</strong><small>{project.path}</small></span>
-            </button>
-          ))}
-          {activeProject && <>
-            <div className="sidebar-heading task-heading"><span>会话</span><button className="icon-button small-button" onClick={newTask} title="新会话"><MessageSquarePlus size={15} /></button></div>
-            {projectTasks.map((task) => (
-              <button key={task.id} className={`task-row ${task.id === activeTaskId ? 'selected' : ''}`} onClick={() => selectTask(task)}>
-                <span className={`task-status ${task.status}`} />
-                <span><strong>{task.title}</strong><small>{formatStatus(task)}</small></span>
+            <div key={project.id} className="project-group">
+              <button className={`project-row ${project.id === activeProject?.id ? 'selected' : ''}`} onClick={() => toggleProject(project.id)} aria-expanded={expandedProjects.has(project.id)}>
+                {expandedProjects.has(project.id) ? <ChevronDown className="project-chevron" size={15} /> : <ChevronRight className="project-chevron" size={15} />}
+                <span className="project-icon">{expandedProjects.has(project.id) ? <FolderOpen size={16} /> : <Folder size={16} />}</span>
+                <span><strong>{project.displayName}</strong><small>{project.path}</small></span>
               </button>
-            ))}
-          </>}
+              {expandedProjects.has(project.id) && (
+                <div className="project-sessions">
+                  <div className="session-heading"><span>会话</span><button className="icon-button small-button" onClick={newTask} title="新会话"><MessageSquarePlus size={15} /></button></div>
+                  {snapshot.tasks.filter((task) => task.projectId === project.id).map((task) => (
+                    <button key={task.id} className={`task-row ${task.id === activeTaskId ? 'selected' : ''}`} onClick={() => selectTask(task)}>
+                      <span className={`task-status ${task.status}`} />
+                      <span><strong>{task.title}</strong><small>{formatStatus(task)}</small></span>
+                    </button>
+                  ))}
+                  {!snapshot.tasks.some((task) => task.projectId === project.id) && <div className="empty-sessions">还没有会话</div>}
+                </div>
+              )}
+            </div>
+          ))}
         </aside>}
 
         <main className="conversation">
@@ -391,16 +442,16 @@ export function App() {
               {error && <div className="error-banner inline-error">{error}</div>}
               <div className="composer-wrap">
                 <div className="composer-toolbar">
-                  <select value={modelKey} onChange={(event) => setModelKey(event.target.value)} disabled={!draft || Boolean(activeTaskId)} aria-label="选择模型">
+                  <select value={modelKey} onChange={(event) => changeModel(event.target.value)} disabled={!settingsEditable || settingsSaving} aria-label="选择模型">
                     {!modelOptions.length && <option value="">先配置模型服务商</option>}
                     {modelOptions.map((model) => <option key={model.key} value={model.key}>{model.name}{model.providerName ? ` · ${model.providerName}` : ''}</option>)}
                   </select>
-                  <select value={permissionMode} onChange={(event) => setPermissionMode(event.target.value as PermissionMode)} disabled={!draft || Boolean(activeTaskId)} aria-label="权限模式">
+                  <select value={permissionMode} onChange={(event) => changePermissionMode(event.target.value as PermissionMode)} disabled={!settingsEditable || settingsSaving} aria-label="权限模式">
                     <option value="ask">Ask</option><option value="auto">Auto</option>
                   </select>
                   <button className="toolbar-link" onClick={() => void attachFile()} disabled={!activeProject}>@file</button>
                   <span className="toolbar-spacer" />
-                  {activeTask?.status === 'running' || activeTask?.status === 'waiting_approval' ? <button className="send-button stop" onClick={() => activeTaskId && void window.appApi.stopTask(activeTaskId)}><Square size={15} fill="currentColor" /></button> : <button className="send-button" onClick={() => void send()} disabled={!input.trim() || !modelKey}><Send size={16} /></button>}
+                  {activeTask?.status === 'running' || activeTask?.status === 'waiting_approval' ? <button className="send-button stop" onClick={() => activeTaskId && void window.appApi.stopTask(activeTaskId)}><Square size={15} fill="currentColor" /></button> : <button className="send-button" onClick={() => void send()} disabled={!input.trim() || !modelKey || settingsSaving}><Send size={16} /></button>}
                 </div>
                 <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void send() } }} placeholder={modelOptions.length ? '让 Agent 在这个项目里做什么？' : '先在右上角配置模型服务商'} disabled={!modelOptions.length} />
               </div>

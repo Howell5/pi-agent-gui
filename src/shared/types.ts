@@ -80,6 +80,11 @@ export interface AppApi {
     modelKey: string
     permissionMode: PermissionMode
   }): Promise<Task>
+  updateTaskSettings(input: {
+    taskId: string
+    modelKey?: string
+    permissionMode?: PermissionMode
+  }): Promise<Task>
   sendMessage(input: { taskId: string; text: string }): Promise<void>
   stopTask(taskId: string): Promise<void>
   respondPermission(input: { taskId: string; approvalId: string; approved: boolean }): Promise<void>

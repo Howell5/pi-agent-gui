@@ -5,6 +5,8 @@ A small, local-first Agent GUI built around Pi Agent.
 ## Scope
 
 - Any local folder can be a project; Git is optional.
+- A project can contain multiple Sessions; each Session keeps its own model and Ask/Auto mode.
+- Session settings can be changed while idle and are restored when the Session is reopened.
 - DeepSeek and OpenAI are built-in Provider Catalog entries.
 - The conversation model picker is flat; Provider routing stays internal.
 - Custom OpenAI-compatible endpoints are supported as an explicit escape hatch.

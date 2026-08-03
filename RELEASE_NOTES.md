@@ -1,12 +1,12 @@
-# Heymoss v0.2.2
+# Heymoss v0.2.3
 
 Pi-first, local-first macOS Agent GUI for Apple Silicon.
 
-This release adds proper assistant Markdown/GFM rendering, Shiki code blocks with copy, compact Codex-style tool summaries, collapsible tool output, thinking sections, and the Heymoss product name. Sessions now restore their model and Ask/Auto mode, and new sessions inherit the current selection. Local development token saves use the ignored `.env.local` file; release builds continue to use macOS secure storage.
+This release adds a Codex-style expandable Project → Session sidebar, editable per-Session model and Ask/Auto settings while idle, proper assistant Markdown/GFM rendering, Shiki code blocks with copy, compact tool summaries, and collapsible tool output. Session settings are persisted and restored; new sessions inherit the current selection. Local development token saves use the ignored `.env.local` file; release builds continue to use macOS secure storage.
 
 ## Install
 
-1. Download `Heymoss-0.2.2-arm64.dmg` and its `.sha256` file.
+1. Download `Heymoss-0.2.3-arm64.dmg` and its `.sha256` file.
 2. Verify the SHA256, open the DMG, and drag `Heymoss.app` to Applications.
 3. The build is unsigned. Control-click the app and choose **Open** on first launch.
 4. Open a local folder, configure DeepSeek or OpenAI, choose a model, and start a Task.

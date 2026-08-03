@@ -7,6 +7,7 @@ const api: AppApi = {
   selectProject: (projectId) => ipcRenderer.invoke('app:selectProject', projectId),
   pickFile: (projectId) => ipcRenderer.invoke('app:pickFile', projectId),
   createTask: (input) => ipcRenderer.invoke('app:createTask', input),
+  updateTaskSettings: (input) => ipcRenderer.invoke('app:updateTaskSettings', input),
   sendMessage: (input) => ipcRenderer.invoke('app:sendMessage', input),
   stopTask: (taskId) => ipcRenderer.invoke('app:stopTask', taskId),
   respondPermission: (input) => ipcRenderer.invoke('app:respondPermission', input),
