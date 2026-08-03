@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Heymoss · UI draft</title>
+    <style>
+      :root {
+        --canvas: #eef1f5;
+        --surface: #f8fafc;
+        --surface-strong: #ffffff;
+        --surface-muted: #f1f4f8;
+        --line: #dfe5ed;
+        --line-strong: #d2dae5;
+        --ink: #172033;
+        --ink-soft: #516077;
+        --ink-faint: #7e8ba0;
+        --accent: #2a5bd7;
+        --accent-soft: #e5ecfc;
+        --accent-ink: #1e46a9;
+        --success: #16845b;
+        --radius-control: 8px;
+        --radius-panel: 12px;
+        --shadow-panel: 0 18px 44px rgb(24 39 75 / 9%);
+        --sidebar-width: 252px;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; }
+      body {
+        margin: 0;
+        min-width: 1060px;
+        overflow: hidden;
+        background: var(--canvas);
+        color: var(--ink);
+        font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button, input, select, textarea { font: inherit; }
+      button { border: 0; cursor: pointer; }
+      button:focus-visible, select:focus-visible, textarea:focus-visible {
+        outline: 3px solid rgb(42 91 215 / 22%);
+        outline-offset: 1px;
+      }
+
+      .app {
+        display: grid;
+        grid-template-rows: 56px minmax(0, 1fr);
+        height: 100vh;
+        background: var(--surface);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+        border-bottom: 1px solid var(--line);
+        background: rgb(255 255 255 / 92%);
+      }
+
+      .brand, .top-actions, .workspace-actions, .composer-tools, .scope-title-row {
+        display: flex;
+        align-items: center;
+      }
+
+      .brand { gap: 10px; font-weight: 650; letter-spacing: -0.01em; }
+      .brand-mark {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border-radius: 9px;
+        background: var(--accent);
+        color: white;
+        font-size: 16px;
+        font-weight: 700;
+        box-shadow: 0 3px 8px rgb(42 91 215 / 20%);
+      }
+
+      .top-actions, .workspace-actions { gap: 6px; }
+      .icon-button, .quiet-button, .primary-button, .send-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        border-radius: var(--radius-control);
+        transition: background 160ms ease, color 160ms ease, transform 160ms ease, border-color 160ms ease;
+      }
+      .icon-button {
+        width: 32px;
+        color: var(--ink-soft);
+        background: transparent;
+        font-size: 17px;
+      }
+      .icon-button:hover, .quiet-button:hover { background: var(--surface-muted); color: var(--ink); }
+      .icon-button:active, .quiet-button:active, .primary-button:active, .send-button:active { transform: translateY(1px); }
+      .quiet-button {
+        gap: 7px;
+        padding: 0 10px;
+        border: 1px solid transparent;
+        color: var(--ink-soft);
+        background: transparent;
+        font-size: 12px;
+        font-weight: 550;
+      }
+      .primary-button {
+        gap: 7px;
+        padding: 0 12px;
+        color: white;
+        background: var(--accent);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .primary-button:hover, .send-button:hover { background: var(--accent-ink); }
+
+      .app-body {
+        display: grid;
+        grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+        min-height: 0;
+      }
+
+      .sidebar {
+        display: flex;
+        min-height: 0;
+        flex-direction: column;
+        border-right: 1px solid var(--line);
+        background: #f2f4f7;
+      }
+      .sidebar-head {
+        display: flex;
+        height: 48px;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px 0 16px;
+        color: var(--ink-faint);
+        font-size: 11px;
+        font-weight: 650;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+      .sidebar-scroll { min-height: 0; flex: 1; overflow-y: auto; padding: 6px 8px 18px; }
+      .project { margin-bottom: 5px; }
+      .project-button, .session-button {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 8px;
+        border-radius: var(--radius-control);
+        color: var(--ink);
+        text-align: left;
+        transition: background 160ms ease;
+      }
+      .project-button { padding: 9px 8px; background: transparent; }
+      .project-button:hover, .session-button:hover { background: #e8edf5; }
+      .project-button.active { background: var(--accent-soft); }
+      .disclosure { width: 14px; color: var(--ink-faint); font-size: 12px; }
+      .folder { color: var(--ink-soft); font-size: 15px; }
+      .project-name { min-width: 0; flex: 1; }
+      .project-name strong, .project-name small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .project-name strong { font-size: 13px; font-weight: 620; }
+      .project-name small { margin-top: 2px; color: var(--ink-faint); font-size: 10px; }
+      .sessions { margin: 2px 0 6px 22px; padding: 4px 0 2px 10px; border-left: 1px solid var(--line-strong); }
+      .session-label { padding: 3px 8px 5px; color: var(--ink-faint); font-size: 10px; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; }
+      .session-button { align-items: flex-start; padding: 8px; background: transparent; }
+      .session-button.active { background: var(--accent-soft); }
+      .session-dot { width: 7px; height: 7px; flex: 0 0 auto; margin-top: 5px; border-radius: 50%; background: #9aa7ba; }
+      .session-button.active .session-dot { background: var(--accent); box-shadow: 0 0 0 3px rgb(42 91 215 / 12%); }
+      .session-copy { min-width: 0; flex: 1; }
+      .session-copy strong, .session-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .session-copy strong { font-size: 12px; font-weight: 560; }
+      .session-copy small { margin-top: 2px; color: var(--ink-faint); font-size: 10px; }
+      .sidebar-foot { padding: 10px 12px 12px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 10px; }
+
+      .workspace {
+        display: flex;
+        min-width: 0;
+        min-height: 0;
+        flex-direction: column;
+        background: var(--surface);
+      }
+      .workspace-head {
+        display: flex;
+        min-height: 76px;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 15px 28px 14px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+      }
+      .context { min-width: 0; }
+      .context-label { margin-bottom: 4px; color: var(--ink-faint); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; }
+      .context h1 { margin: 0; overflow: hidden; font-size: 18px; font-weight: 640; letter-spacing: -0.025em; text-overflow: ellipsis; white-space: nowrap; }
+      .workspace-actions { flex: 0 0 auto; }
+      .status {
+        display: inline-flex;
+        min-height: 25px;
+        align-items: center;
+        padding: 0 9px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface-strong);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .message-viewport { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+      .message-column { width: min(820px, calc(100% - 56px)); margin: 0 auto; padding: 30px 0 24px; }
+      .message { margin: 0 0 22px; }
+      .message-meta { margin: 0 0 6px; color: var(--ink-faint); font-size: 11px; font-weight: 600; }
+      .message.user { padding-left: 16%; text-align: right; }
+      .message.user .message-meta { text-align: right; }
+      .user-bubble {
+        display: inline-block;
+        max-width: 100%;
+        padding: 10px 13px;
+        border-radius: 12px 12px 3px 12px;
+        color: var(--ink);
+        background: var(--accent-soft);
+        text-align: left;
+        line-height: 1.55;
+      }
+      .assistant-copy { color: #28354b; line-height: 1.7; }
+      .assistant-copy p { margin: 0 0 10px; }
+      .assistant-copy p:last-child { margin-bottom: 0; }
+      .assistant-copy strong { color: var(--ink); font-weight: 650; }
+      .inline-code { padding: 2px 5px; border-radius: 5px; color: #ad2352; background: #f9e8f0; font: 0.9em ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .rule { height: 1px; margin: 24px 0 20px; background: var(--line); }
+
+      .activity {
+        margin: 0 0 18px;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .activity summary {
+        display: flex;
+        min-height: 38px;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        color: var(--ink-soft);
+        list-style: none;
+        user-select: none;
+      }
+      .activity summary::-webkit-details-marker { display: none; }
+      .activity summary::before { content: "›"; color: var(--ink-faint); font-size: 19px; line-height: 1; transition: transform 160ms ease; }
+      .activity[open] summary::before { transform: rotate(90deg); }
+      .activity-time { font-size: 12px; font-weight: 560; }
+      .activity-labels { overflow: hidden; color: var(--ink-faint); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .activity-body { display: grid; gap: 5px; padding: 0 0 10px 22px; }
+      .tool-row { display: flex; min-height: 30px; align-items: center; gap: 8px; padding: 0 9px; border-radius: 7px; color: var(--ink-soft); background: var(--surface-muted); font-size: 11px; }
+      .tool-icon { width: 17px; color: var(--ink-faint); text-align: center; }
+      .tool-row strong { color: var(--ink-soft); font-weight: 600; }
+      .tool-row small { overflow: hidden; color: var(--ink-faint); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
+
+      .composer-dock { flex: 0 0 auto; padding: 10px 28px 22px; border-top: 1px solid var(--line); background: var(--surface); }
+      .composer {
+        display: grid;
+        width: min(820px, 100%);
+        min-height: 116px;
+        margin: 0 auto;
+        padding: 10px 11px 9px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius-panel);
+        background: var(--surface-strong);
+        box-shadow: var(--shadow-panel);
+      }
+      .composer-tools { gap: 6px; }
+      .composer select {
+        height: 32px;
+        max-width: 200px;
+        padding: 0 28px 0 9px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-control);
+        color: var(--ink);
+        background: var(--surface);
+        font-size: 12px;
+        appearance: auto;
+      }
+      .composer select.mode { width: 76px; }
+      .composer select.model { width: 200px; }
+      .file-button { gap: 5px; min-height: 32px; padding: 0 8px; color: var(--ink-soft); background: transparent; font-size: 12px; }
+      .file-button:hover { color: var(--ink); background: var(--surface-muted); }
+      .composer-spacer { flex: 1; }
+      .send-button { width: 32px; min-height: 32px; color: white; background: var(--accent); font-size: 16px; }
+      .composer textarea { width: 100%; min-height: 55px; resize: none; padding: 10px 2px 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 13px; line-height: 1.5; }
+      .composer textarea::placeholder { color: var(--ink-faint); }
+
+      .scope-panel {
+        position: fixed;
+        z-index: 10;
+        top: 65px;
+        right: 18px;
+        width: min(370px, calc(100vw - 36px));
+        max-height: calc(100vh - 84px);
+        overflow: auto;
+        padding: 18px;
+        border: 1px solid var(--line-strong);
+        border-radius: 14px;
+        background: rgb(255 255 255 / 97%);
+        box-shadow: 0 22px 60px rgb(18 31 58 / 18%);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-5px);
+        transition: opacity 150ms ease, transform 150ms ease;
+      }
+      .scope-panel.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+      .scope-title-row { justify-content: space-between; gap: 12px; }
+      .scope-title-row h2 { margin: 0; font-size: 15px; letter-spacing: -0.01em; }
+      .scope-kicker { margin: 3px 0 15px; color: var(--ink-faint); font-size: 11px; }
+      .scope-group { margin-top: 14px; }
+      .scope-group h3 { margin: 0 0 7px; color: var(--ink-soft); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+      .scope-item { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+      .scope-item:first-of-type { border-top: 0; }
+      .scope-check { color: var(--success); font-size: 13px; }
+      .scope-item strong { display: block; font-size: 12px; font-weight: 620; }
+      .scope-item small { display: block; margin-top: 2px; color: var(--ink-faint); font-size: 10px; line-height: 1.5; }
+      .scope-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 10px; }
+
+      .toast { position: fixed; right: 18px; bottom: 18px; z-index: 20; padding: 9px 12px; border: 1px solid var(--line-strong); border-radius: 8px; color: var(--ink-soft); background: white; box-shadow: var(--shadow-panel); font-size: 12px; opacity: 0; transform: translateY(8px); transition: opacity 160ms ease, transform 160ms ease; pointer-events: none; }
+      .toast.show { opacity: 1; transform: translateY(0); }
+
+      @media (max-width: 900px) {
+        :root { --sidebar-width: 220px; }
+        .workspace-head { padding-inline: 20px; }
+        .composer-dock { padding-inline: 20px; }
+        .message-column { width: min(820px, calc(100% - 40px)); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">H</span><span>Heymoss</span></div>
+        <div class="top-actions">
+          <button class="quiet-button" id="scope-toggle" type="button">下一小版</button>
+          <button class="icon-button" type="button" aria-label="模型服务商" title="模型服务商">⌁</button>
+          <button class="icon-button" type="button" aria-label="打开项目" title="打开项目">⌂</button>
+          <button class="icon-button" id="sidebar-toggle" type="button" aria-label="切换项目栏" title="切换项目栏">◧</button>
+        </div>
+      </header>
+
+      <div class="app-body">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-head"><span>项目</span><button class="icon-button" type="button" aria-label="打开项目">＋</button></div>
+          <div class="sidebar-scroll">
+            <section class="project">
+              <button class="project-button active" type="button" data-project="our-menu"><span class="disclosure">⌄</span><span class="folder">□</span><span class="project-name"><strong>our-menu</strong><small>/Users/willhong/Code/Life/our-menu</small></span></button>
+              <div class="sessions">
+                <div class="session-label">会话</div>
+                <button class="session-button active" type="button" data-session="overview"><span class="session-dot"></span><span class="session-copy"><strong>整体了解项目问题</strong><small>空闲 · DeepSeek V4 Pro</small></span></button>
+                <button class="session-button" type="button" data-session="api"><span class="session-dot"></span><span class="session-copy"><strong>检查 API 安全性</strong><small>空闲 · Ask</small></span></button>
+                <button class="session-button" type="button" data-session="cleanup"><span class="session-dot"></span><span class="session-copy"><strong>清理迁移文件</strong><small>已完成 · Auto</small></span></button>
+              </div>
+            </section>
+            <section class="project">
+              <button class="project-button" type="button" data-project="heymoss"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name"><strong>pi-agent-gui</strong><small>/Users/willhong/Documents/Codex</small></span></button>
+            </section>
+          </div>
+          <div class="sidebar-foot">项目是本地文件夹；Git、Worktree 不是核心入口。</div>
+        </aside>
+
+        <main class="workspace">
+          <section class="workspace-head">
+            <div class="context"><div class="context-label">our-menu</div><h1 id="task-title">你觉得现在这个项目有什么问题 bug 吗？</h1></div>
+            <div class="workspace-actions"><span class="status">空闲</span><button class="quiet-button" id="new-session" type="button">＋ 新会话</button></div>
+          </section>
+
+          <section class="message-viewport" id="message-viewport" aria-label="会话消息">
+            <div class="message-column" id="message-column">
+              <article class="message user"><div class="message-meta">你</div><div class="user-bubble">你觉得现在这个项目有什么问题 bug 吗？你做一个整体的大概了解吧。</div></article>
+              <article class="message"><div class="message-meta">Heymoss</div><div class="assistant-copy"><p>我先整体了解一下这个项目，然后分析可能存在的问题。</p></div></article>
+              <details class="activity">
+                <summary><span class="activity-time">Worked for 1m 14s</span><span class="activity-labels">Edited files · Read files · Ran commands</span></summary>
+                <div class="activity-body">
+                  <div class="tool-row"><span class="tool-icon">⌘</span><strong>ls</strong><small>列出项目文件</small></div>
+                  <div class="tool-row"><span class="tool-icon">⌕</span><strong>read</strong><small>读取 package.json</small></div>
+                  <div class="tool-row"><span class="tool-icon">✎</span><strong>edit</strong><small>更新 src/renderer/App.tsx</small></div>
+                </div>
+              </details>
+              <article class="message"><div class="message-meta">Heymoss</div><div class="assistant-copy"><p>我发现几个值得优先处理的点：</p><p><strong>后端无输入校验：</strong> <code class="inline-code">PUT /api/dishes</code> 可以写入任意 JSON；<code class="inline-code">POST /api/menu-history</code> 传空 <code class="inline-code">menu</code> 会算出 NaN 辣度。</p><p><strong>交互不一致：</strong>设置、授权和会话操作应该使用同一套轻量控件，并且保持状态可见。</p></div></article>
+              <div class="rule"></div>
+              <article class="message"><div class="message-meta">Heymoss</div><div class="assistant-copy"><p><strong>总体评价</strong></p><p>架构简单清晰，适合家庭场景。下一步可以在不增加复杂后台的前提下，先把会话体验和错误反馈打磨完整。</p></div></article>
+            </div>
+          </section>
+
+          <footer class="composer-dock">
+            <form class="composer" id="composer">
+              <div class="composer-tools">
+                <select class="model" id="model" aria-label="模型"><option>DeepSeek V4 Pro</option><option>DeepSeek V4 Flash</option><option>OpenAI GPT-5</option></select>
+                <select class="mode" id="mode" aria-label="权限模式"><option>Ask</option><option>Auto</option></select>
+                <button class="file-button" type="button" id="attach">⌕ @file</button>
+                <span class="composer-spacer"></span>
+                <button class="send-button" type="submit" aria-label="发送">➤</button>
+              </div>
+              <textarea id="prompt" placeholder="让 Agent 在这个项目里做什么？" aria-label="输入消息"></textarea>
+            </form>
+          </footer>
+        </main>
+      </div>
+
+      <aside class="scope-panel" id="scope-panel" aria-label="下一小版功能范围">
+        <div class="scope-title-row"><h2>下一小版 · 功能范围</h2><button class="icon-button" id="scope-close" type="button" aria-label="关闭">×</button></div>
+        <p class="scope-kicker">先把核心 Agent 对话体验定稳，再继续加能力。</p>
+        <section class="scope-group"><h3>必须有</h3>
+          <div class="scope-item"><span class="scope-check">✓</span><div><strong>项目 → 多会话</strong><small>每个会话独立保存模型与 Ask/Auto；重新打开仍恢复。</small></div></div>
+          <div class="scope-item"><span class="scope-check">✓</span><div><strong>稳定的消息流</strong><small>Markdown、代码块、复制、流式状态和错误状态。</small></div></div>
+          <div class="scope-item"><span class="scope-check">✓</span><div><strong>活动摘要默认收起</strong><small>Worked for + Edited / Read / Ran commands，详情按需展开。</small></div></div>
+          <div class="scope-item"><span class="scope-check">✓</span><div><strong>固定 composer</strong><small>只有中间消息区滚动，输入框和消息区 header 固定。</small></div></div>
+        </section>
+        <section class="scope-group"><h3>可以加入</h3>
+          <div class="scope-item"><span class="scope-check">○</span><div><strong>回到底部按钮</strong><small>用户阅读旧消息时，提供一个轻量的回到底部入口。</small></div></div>
+          <div class="scope-item"><span class="scope-check">○</span><div><strong>会话重命名</strong><small>从默认首句变成可读标题，但不引入复杂任务管理。</small></div></div>
+          <div class="scope-item"><span class="scope-check">○</span><div><strong>附件 chip</strong><small>选择文件后在 composer 里显示可移除的文件条目。</small></div></div>
+        </section>
+        <section class="scope-group"><h3>明确不做</h3>
+          <div class="scope-item"><span class="scope-check">—</span><div><strong>Git / Worktree / Changes</strong><small>Git 继续作为 Agent 的技能，不成为产品主导航。</small></div></div>
+          <div class="scope-item"><span class="scope-check">—</span><div><strong>Claude 专用协议和通知系统</strong><small>先把 OpenAI-compatible 路径做好。</small></div></div>
+        </section>
+        <div class="scope-foot">这只是功能边界稿，不会直接改动当前 Electron 应用。</div>
+      </aside>
+      <div class="toast" id="toast" role="status"></div>
+    </div>
+
+    <script>
+      const viewport = document.getElementById('message-viewport');
+      const column = document.getElementById('message-column');
+      const prompt = document.getElementById('prompt');
+      const toast = document.getElementById('toast');
+      const scopePanel = document.getElementById('scope-panel');
+      let toastTimer;
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+      }
+
+      document.getElementById('scope-toggle').addEventListener('click', () => scopePanel.classList.toggle('open'));
+      document.getElementById('scope-close').addEventListener('click', () => scopePanel.classList.remove('open'));
+      document.getElementById('sidebar-toggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.hidden = !sidebar.hidden;
+        document.getElementById('app').style.gridTemplateColumns = sidebar.hidden ? '0 minmax(0, 1fr)' : '';
+      });
+      document.getElementById('attach').addEventListener('click', () => showToast('UI 稿：这里会打开项目文件选择器'));
+      document.getElementById('new-session').addEventListener('click', () => {
+        document.getElementById('task-title').textContent = '新会话';
+        prompt.value = '';
+        showToast('UI 稿：已切换到新会话');
+      });
+
+      document.querySelectorAll('.session-button').forEach((button) => button.addEventListener('click', () => {
+        document.querySelectorAll('.session-button').forEach((item) => item.classList.remove('active'));
+        button.classList.add('active');
+        document.getElementById('task-title').textContent = button.querySelector('strong').textContent;
+        showToast(`已选择会话：${button.querySelector('strong').textContent}`);
+      }));
+
+      document.getElementById('composer').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const text = prompt.value.trim();
+        if (!text) return;
+        const user = document.createElement('article');
+        user.className = 'message user';
+        user.innerHTML = `<div class="message-meta">你</div><div class="user-bubble"></div>`;
+        user.querySelector('.user-bubble').textContent = text;
+        column.append(user);
+        prompt.value = '';
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        setTimeout(() => {
+          const answer = document.createElement('article');
+          answer.className = 'message';
+          answer.innerHTML = '<div class="message-meta">Heymoss</div><div class="assistant-copy"><p>这是 UI 稿里的模拟回复。真实版本会在这里显示流式消息、活动摘要和错误状态。</p></div>';
+          column.append(answer);
+          viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        }, 650);
+      });
+    </script>
+  </body>
+</html>
