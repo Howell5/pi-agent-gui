@@ -1,0 +1,63 @@
+{
+  "name": "pi-agent-gui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A small Pi-first local Agent GUI for macOS.",
+  "author": "Pi Agent GUI contributors",
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build && node scripts/copy-worker.mjs",
+    "preview": "electron-vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "dist:mac": "npm run build && electron-builder --mac dmg --arm64",
+    "hash:release": "node scripts/hash-release.mjs"
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "^0.83.0",
+    "@earendil-works/pi-coding-agent": "^0.83.0",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.4"
+  },
+  "build": {
+    "appId": "com.piagent.gui",
+    "productName": "Pi Agent GUI",
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/@earendil-works/**",
+      "node_modules/@silvia-odwyer/**"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64"]
+        }
+      ]
+    },
+    "dmg": {
+      "title": "Pi Agent GUI"
+    }
+  }
+}

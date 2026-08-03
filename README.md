@@ -1,0 +1,43 @@
+# Pi Agent GUI
+
+A small, local-first Agent GUI built around Pi Agent.
+
+## Scope
+
+- Any local folder can be a project; Git is optional.
+- DeepSeek and OpenAI are built-in Provider Catalog entries.
+- The conversation model picker is flat; Provider routing stays internal.
+- Custom OpenAI-compatible endpoints are supported as an explicit escape hatch.
+- Ask and Auto permission modes protect project boundaries and sensitive commands.
+- Sessions are persisted as Pi JSONL under macOS Application Support.
+
+This project intentionally does not include Changes/Diff panels, Git UI, MCP, Claude Agent SDK, Codex app-server, SQLite, cloud sync, plugins, auto-update or telemetry in v0.1.
+
+## Development
+
+Requires Node.js 22.19+ and pnpm 9.
+
+```bash
+corepack pnpm@9.15.0 install
+corepack pnpm@9.15.0 typecheck
+corepack pnpm@9.15.0 test
+corepack pnpm@9.15.0 dev
+```
+
+The first run opens a folder picker. Configure a DeepSeek or OpenAI API token from the plug icon, choose a model, and send a message.
+
+## Build an Apple Silicon DMG
+
+```bash
+corepack pnpm@9.15.0 typecheck
+corepack pnpm@9.15.0 test
+corepack pnpm@9.15.0 build
+node scripts/verify-package.mjs
+corepack pnpm@9.15.0 dist:mac
+```
+
+The unsigned DMG is generated under `dist/`. Release checksums are generated with `pnpm hash:release` after copying the DMG into `release/`.
+
+## Architecture
+
+The Renderer talks to Electron Main over typed IPC. Main owns filesystem access, permissions, safeStorage and the Pi Worker lifecycle. Each active task has an isolated worker, and the worker uses Pi's `createAgentSession` and `SessionManager` directly.
