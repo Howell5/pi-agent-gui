@@ -59,6 +59,7 @@ export class AppStore {
     mkdirSync(this.tasksPath, { recursive: true })
     mkdirSync(this.logsPath, { recursive: true })
     this.state = readJson(this.projectsPath, readJson(join(rootPath, 'state.json'), EMPTY_STATE))
+    if (!existsSync(this.projectsPath)) this.save()
     this.log('application store opened')
     this.loadTasks()
   }

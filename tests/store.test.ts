@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -9,6 +9,8 @@ describe('JSON task persistence', () => {
     const root = mkdtempSync(join(tmpdir(), 'pi-agent-gui-'))
     try {
       const first = new AppStore(root)
+      expect(existsSync(join(root, 'projects.json'))).toBe(true)
+      expect(existsSync(join(root, 'logs', 'app.log'))).toBe(true)
       const task = first.createTask({
         projectId: 'project-1',
         title: 'Demo',
@@ -19,6 +21,8 @@ describe('JSON task persistence', () => {
         sessionPath: join(root, 'tasks', 'pending', 'session.jsonl'),
       })
       expect(first.findTask(task.id)?.title).toBe('Demo')
+      expect(existsSync(join(root, 'projects.json'))).toBe(true)
+      expect(readFileSync(join(root, 'logs', 'app.log'), 'utf8')).toContain('application store opened')
 
       const second = new AppStore(root)
       expect(second.findTask(task.id)?.status).toBe('failed')
