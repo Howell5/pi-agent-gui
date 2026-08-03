@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { FolderOpen, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, Plug, Send, Settings, Square, X } from 'lucide-react'
+import { Brain, ChevronDown, ChevronRight, FolderOpen, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, Plug, Send, Square, Terminal, X } from 'lucide-react'
 import type { AppSnapshot, PermissionMode, ProviderView, Task, UiMessage } from '@shared/types'
+import { MarkdownMessage } from './MarkdownMessage'
 
 function firstModel(snapshot: AppSnapshot | null): string {
   return snapshot?.providers.flatMap((provider) => provider.models)[0]?.key ?? ''
@@ -12,6 +13,40 @@ function formatStatus(task: Task): string {
   if (task.status === 'waiting_approval') return '等待授权'
   if (task.status === 'failed') return '失败'
   return '空闲'
+}
+
+function toolDetail(message: UiMessage): string {
+  const args = message.toolArgs
+  if (!args) return ''
+  const value = args.path ?? args.file_path ?? args.command ?? args.cmd
+  return typeof value === 'string' ? value : ''
+}
+
+function toolStatusLabel(state: UiMessage['toolState']): string {
+  if (state === 'running') return '运行中'
+  if (state === 'error') return '失败'
+  return '完成'
+}
+
+function ToolMessage({ message }: { message: UiMessage }) {
+  const [expanded, setExpanded] = useState(message.toolState === 'running')
+  const output = message.toolOutput || (message.text.includes('\n') ? message.text.split('\n').slice(1).join('\n') : '')
+  const detail = toolDetail(message)
+
+  return (
+    <div className={`tool-card ${message.toolState ?? ''}`}>
+      <button type="button" className="tool-card-header" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded}>
+        <span className="tool-icon"><Terminal size={14} /></span>
+        <span className="tool-info">
+          <span className="tool-name">{message.toolName ?? '工具'}</span>
+          {detail && <span className="tool-detail">{detail}</span>}
+        </span>
+        <span className="tool-status">{toolStatusLabel(message.toolState)}</span>
+        {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+      </button>
+      {expanded && output && <div className="tool-card-body"><pre>{output}</pre></div>}
+    </div>
+  )
 }
 
 function AppMessage({ message, onPermission }: { message: UiMessage; onPermission: (message: UiMessage, approved: boolean) => void }) {
@@ -32,14 +67,23 @@ function AppMessage({ message, onPermission }: { message: UiMessage; onPermissio
     )
   }
 
+  if (message.role === 'tool') return <ToolMessage message={message} />
+  if ((message.role === 'assistant' || message.role === 'system') && !message.text.trim() && !message.thinking?.trim()) return null
+
   return (
     <div className={`message-row ${message.role}`}>
       <div className="message-meta">
-        {message.role === 'user' ? '你' : message.role === 'assistant' ? 'Pi Agent' : message.role === 'tool' ? message.toolName ?? '工具' : '系统'}
-        {message.role === 'tool' && message.toolState ? ` · ${message.toolState}` : ''}
+        {message.role === 'user' ? '你' : message.role === 'assistant' ? 'Heymoss' : '系统'}
+        {message.streaming && <span className="streaming-label"> · 生成中</span>}
       </div>
       <div className="message-body">
-        {message.role === 'tool' ? <pre>{message.text}</pre> : <div className="message-text">{message.text}</div>}
+        {message.role === 'assistant' && message.thinking && (
+          <details className="thinking-block" open={message.streaming}>
+            <summary><Brain size={14} />思考过程</summary>
+            <MarkdownMessage source={message.thinking} />
+          </details>
+        )}
+        {message.role === 'assistant' ? <MarkdownMessage source={message.text} /> : <div className="message-text">{message.text}</div>}
       </div>
     </div>
   )
@@ -247,7 +291,7 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div className="brand"><span className="brand-mark">π</span><span>Pi Agent GUI</span></div>
+        <div className="brand"><span className="brand-mark">H</span><span>Heymoss</span></div>
         <div className="topbar-actions">
           <Dialog.Root open={providerOpen} onOpenChange={setProviderOpen}>
             <Dialog.Trigger asChild><button className="icon-button" title="模型服务商"><Plug size={17} /></button></Dialog.Trigger>
@@ -282,7 +326,7 @@ export function App() {
         <main className="conversation">
           {!activeProject ? (
             <div className="welcome">
-              <div className="welcome-icon">π</div>
+              <div className="welcome-icon">H</div>
               <h1>从一个项目开始</h1>
               <p>选择任意本地文件夹，让 Pi Agent 在其中工作。</p>
               <button className="button primary" onClick={() => void openProject()}><FolderOpen size={16} />打开文件夹</button>

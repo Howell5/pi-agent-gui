@@ -36,8 +36,13 @@ export interface UiMessage {
   role: UiMessageRole
   text: string
   createdAt: number
+  streaming?: boolean
+  thinking?: string
   toolName?: string
+  toolCallId?: string
+  toolArgs?: Record<string, unknown>
   toolState?: 'running' | 'done' | 'error'
+  toolOutput?: string
   approvalId?: string
   approvalState?: 'pending' | 'approved' | 'denied'
 }

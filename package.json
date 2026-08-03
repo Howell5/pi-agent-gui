@@ -1,9 +1,9 @@
 {
   "name": "pi-agent-gui",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
-  "description": "A small Pi-first local Agent GUI for macOS.",
-  "author": "Pi Agent GUI contributors",
+  "description": "A small Pi-first local Agent GUI for macOS, built as Heymoss.",
+  "author": "Heymoss contributors",
   "type": "module",
   "main": "out/main/index.js",
   "scripts": {
@@ -21,7 +21,11 @@
     "@radix-ui/react-dialog": "^1.1.23",
     "lucide-react": "^0.468.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "shiki": "^4.4.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -39,7 +43,7 @@
   },
   "build": {
     "appId": "com.piagent.gui",
-    "productName": "Pi Agent GUI",
+    "productName": "Heymoss",
     "files": [
       "out/**/*",
       "package.json"
@@ -62,7 +66,7 @@
     },
     "afterPack": "scripts/after-pack.cjs",
     "dmg": {
-      "title": "Pi Agent GUI"
+      "title": "Heymoss"
     }
   }
 }

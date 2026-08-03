@@ -21,17 +21,23 @@ function post(message) {
   parentPort.postMessage(message)
 }
 
-function contentText(content) {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
-  return content.map((part) => {
-    if (typeof part === 'string') return part
-    return part?.type === 'text' ? part.text : ''
-  }).join('')
+function contentParts(content) {
+  if (typeof content === 'string') return [{ type: 'text', text: content }]
+  return Array.isArray(content) ? content : []
 }
 
-function messageText(message) {
-  return contentText(message?.content)
+function partText(part, type) {
+  if (typeof part === 'string') return type === 'text' ? part : ''
+  if (!part || part.type !== type) return ''
+  return String(part.text ?? part.thinking ?? part.reasoning ?? part.content ?? '')
+}
+
+function messageContent(message) {
+  const parts = contentParts(message?.content)
+  return {
+    text: parts.map((part) => partText(part, 'text')).join(''),
+    thinking: parts.map((part) => partText(part, 'thinking') || partText(part, 'reasoning')).join(''),
+  }
 }
 
 function safeDescription(toolName, args) {
@@ -118,12 +124,12 @@ function handleEvent(event) {
   switch (event.type) {
     case 'message_update':
       if (event.message?.role === 'assistant') {
-        post({ type: 'assistant', phase: 'update', text: messageText(event.message) })
+        post({ type: 'assistant', phase: 'update', ...messageContent(event.message) })
       }
       break
     case 'message_end':
       if (event.message?.role === 'assistant') {
-        post({ type: 'assistant', phase: 'end', text: messageText(event.message) })
+        post({ type: 'assistant', phase: 'end', ...messageContent(event.message) })
       }
       break
     case 'tool_execution_start':

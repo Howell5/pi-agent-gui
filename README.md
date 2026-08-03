@@ -1,4 +1,4 @@
-# Pi Agent GUI
+# Heymoss
 
 A small, local-first Agent GUI built around Pi Agent.
 
@@ -26,6 +26,15 @@ corepack pnpm@9.15.0 dev
 
 The first run opens a folder picker. Configure a DeepSeek or OpenAI API token from the plug icon, choose a model, and send a message.
 
+During local development, the plug-icon form writes tokens to the ignored `.env.local` file instead of macOS secure storage. You can also create it directly:
+
+```bash
+DEEPSEEK_API_KEY="your-token"
+OPENAI_API_KEY="your-token"
+```
+
+Release builds continue to use macOS secure storage.
+
 ## Build an Apple Silicon DMG
 
 ```bash
@@ -40,10 +49,10 @@ The DMG is ad-hoc signed as a coherent app bundle, but it is not signed with an 
 
 ## Install the unsigned build
 
-Download the Apple Silicon DMG from the GitHub Release, open it, and drag `Pi Agent GUI.app` to Applications. Because the build is not notarized, use Control-click → Open on the first launch if macOS asks for confirmation. Configure a Provider token from the plug icon before starting a Task. Verify the download before opening it:
+Download the Apple Silicon DMG from the GitHub Release, open it, and drag `Heymoss.app` to Applications. Because the build is not notarized, use Control-click → Open on the first launch if macOS asks for confirmation. Configure a Provider token from the plug icon before starting a Task. Verify the download before opening it:
 
 ```bash
-shasum -a 256 Pi-Agent-GUI-0.1.1-arm64.dmg
+shasum -a 256 Heymoss-0.2.0-arm64.dmg
 ```
 
 ## Architecture

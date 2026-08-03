@@ -1,11 +1,13 @@
-# Pi Agent GUI v0.1.1
+# Heymoss v0.2.0
 
 Pi-first, local-first macOS Agent GUI for Apple Silicon.
 
+This release adds proper assistant Markdown/GFM rendering, Shiki code blocks with copy, collapsible tool output, thinking sections, and the Heymoss product name. Local development token saves use the ignored `.env.local` file; release builds continue to use macOS secure storage.
+
 ## Install
 
-1. Download `Pi-Agent-GUI-0.1.1-arm64.dmg` and its `.sha256` file.
-2. Verify the SHA256, open the DMG, and drag `Pi Agent GUI.app` to Applications.
+1. Download `Heymoss-0.2.0-arm64.dmg` and its `.sha256` file.
+2. Verify the SHA256, open the DMG, and drag `Heymoss.app` to Applications.
 3. The build is unsigned. Control-click the app and choose **Open** on first launch.
 4. Open a local folder, configure DeepSeek or OpenAI, choose a model, and start a Task.
 

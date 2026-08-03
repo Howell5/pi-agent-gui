@@ -117,18 +117,24 @@ function terminateWorker(taskId: string): void {
   workers.delete(taskId)
 }
 
-function replaceStreamingAssistant(task: Task, text: string, done = false): void {
+function replaceStreamingAssistant(task: Task, text: string, done = false, thinking = ''): void {
   const last = task.messages[task.messages.length - 1]
   if (last?.role === 'assistant' && last.id.startsWith('streaming-')) {
     last.text = text
+    if (thinking) last.thinking = thinking
+    last.streaming = !done
     if (done) last.id = last.id.replace('streaming-', 'assistant-')
-  } else {
+  } else if (text.trim() || thinking.trim()) {
     task.messages.push({
       id: done ? `assistant-${randomUUID()}` : `streaming-${randomUUID()}`,
       role: 'assistant',
       text,
+      thinking: thinking || undefined,
+      streaming: !done,
       createdAt: now(),
     })
+  } else {
+    return
   }
   updateTask(task)
 }
@@ -147,7 +153,7 @@ function handleWorkerMessage(task: Task, runtime: WorkerRuntime, message: any): 
   }
 
   if (message.type === 'assistant') {
-    replaceStreamingAssistant(task, String(message.text ?? ''), message.phase === 'end')
+    replaceStreamingAssistant(task, String(message.text ?? ''), message.phase === 'end', String(message.thinking ?? ''))
     broadcast()
     return
   }
@@ -157,6 +163,8 @@ function handleWorkerMessage(task: Task, runtime: WorkerRuntime, message: any): 
       id: `tool-${message.toolCallId ?? randomUUID()}`,
       role: 'tool',
       toolName: String(message.toolName ?? 'tool'),
+      toolCallId: message.toolCallId ? String(message.toolCallId) : undefined,
+      toolArgs: message.args && typeof message.args === 'object' ? message.args : undefined,
       toolState: 'running',
       text: formatToolStart(message.toolName, message.args),
       createdAt: now(),
@@ -166,10 +174,11 @@ function handleWorkerMessage(task: Task, runtime: WorkerRuntime, message: any): 
   }
 
   if (message.type === 'tool_end') {
-    const tool = [...task.messages].reverse().find((item) => item.role === 'tool' && item.toolState === 'running')
+    const tool = [...task.messages].reverse().find((item) => item.role === 'tool' && item.toolState === 'running' && (!message.toolCallId || item.toolCallId === String(message.toolCallId)))
     if (tool) {
       tool.toolState = message.isError ? 'error' : 'done'
-      tool.text = formatToolEnd(tool.toolName, message.result, Boolean(message.isError))
+      tool.text = `${tool.toolName ?? 'tool'} ${message.isError ? 'failed' : 'finished'}`
+      tool.toolOutput = formatToolResult(message.result)
       updateTask(task)
     }
     broadcast()
@@ -213,18 +222,17 @@ function formatToolStart(toolName: unknown, args: unknown): string {
   return detail ? `${name}: ${String(detail)}` : `${name} started`
 }
 
-function formatToolEnd(toolName: string | undefined, result: unknown, isError: boolean): string {
-  const prefix = `${toolName ?? 'tool'} ${isError ? 'failed' : 'finished'}`
-  if (!result) return prefix
-  if (typeof result === 'string') return `${prefix}\n${result.slice(0, 4000)}`
+function formatToolResult(result: unknown): string {
+  if (!result) return ''
+  if (typeof result === 'string') return result.slice(0, 4000)
   if (typeof result === 'object') {
     const content = (result as { content?: unknown }).content
     if (Array.isArray(content)) {
       const text = content.map((item) => typeof item === 'string' ? item : (item as { text?: string })?.text ?? '').join('\n')
-      return text ? `${prefix}\n${text.slice(0, 4000)}` : prefix
+      return text.slice(0, 4000)
     }
   }
-  return prefix
+  return JSON.stringify(result, null, 2).slice(0, 4000)
 }
 
 function startWorker(task: Task, initialPrompt?: string): void {
@@ -265,7 +273,7 @@ async function createWindow(): Promise<void> {
     height: 840,
     minWidth: 980,
     minHeight: 640,
-    title: 'Pi Agent GUI',
+    title: 'Heymoss',
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
@@ -444,7 +452,7 @@ app.whenReady().then(async () => {
   const dataRoot = join(app.getPath('userData'), 'data')
   mkdirSync(dataRoot, { recursive: true })
   store = new AppStore(dataRoot)
-  secrets = new SecretStore(dataRoot)
+  secrets = new SecretStore(dataRoot, { development: !app.isPackaged, envPath: join(process.cwd(), '.env.local') })
   registerIpc()
   await createWindow()
 })

@@ -5,3 +5,4 @@ dist
 *.log
 release/*.sha256
 release/*.dmg
+.env.local
