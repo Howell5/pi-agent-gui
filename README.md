@@ -5,6 +5,7 @@ A small, local-first Agent GUI built around Pi Agent.
 ## Scope
 
 - Any local folder can be a project; Git is optional.
+- **New Chat** creates an empty managed project under `~/Heymoss/YYYY-MM-DD/new-chat[-N]`; the Projects `+` action opens an existing folder instead.
 - A project can contain multiple Sessions; each Session keeps its own model and Ask/Auto mode.
 - Session settings can be changed while idle and are restored when the Session is reopened.
 - DeepSeek and OpenAI are built-in Provider Catalog entries.

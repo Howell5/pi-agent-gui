@@ -9,6 +9,7 @@ import type { AppSnapshot, PermissionMode, Project, Task, UiMessage } from '../s
 import { AppStore, type StoredProvider } from './store'
 import { SecretStore } from './secrets'
 import { buildProviderViews, parseModelKey } from './provider-catalog'
+import { createManagedProjectPath } from './managed-projects'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -327,9 +328,24 @@ function registerIpc(): void {
       path: projectPath,
       displayName: projectPath.split('/').filter(Boolean).pop() ?? projectPath,
       lastOpenedAt: now(),
+      origin: 'external',
     }
     project.lastOpenedAt = now()
     store.upsertProject(project)
+    return broadcast()
+  })
+
+  ipcMain.handle('app:createManagedProject', () => {
+    const projectPath = createManagedProjectPath(app.getPath('home'))
+    const project: Project = {
+      id: randomUUID(),
+      path: projectPath,
+      displayName: projectPath.split('/').filter(Boolean).pop() ?? 'new-chat',
+      lastOpenedAt: now(),
+      origin: 'managed',
+    }
+    store.upsertProject(project)
+    store.log(`created managed project at ${projectPath}`)
     return broadcast()
   })
 

@@ -1,6 +1,6 @@
 {
   "name": "pi-agent-gui",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "A small Pi-first local Agent GUI for macOS, built as Heymoss.",
   "author": "Heymoss contributors",

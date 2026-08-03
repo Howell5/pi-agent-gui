@@ -258,23 +258,8 @@
       .new-chat-copy { margin: 0 0 18px; }
       .new-chat-copy h2 { margin: 0 0 4px; font-size: 21px; font-weight: 650; letter-spacing: -.03em; }
       .new-chat-copy p { margin: 0; color: var(--ink-faint); font-size: 11px; }
-      .project-picker {
-        position: absolute;
-        right: 61px;
-        bottom: 130px;
-        z-index: 4;
-        width: 270px;
-        padding: 6px;
-        border: 1px solid var(--line-strong);
-        border-radius: 9px;
-        background: #fff;
-        box-shadow: var(--shadow-menu);
-      }
-      .picker-label { padding: 6px 8px 5px; color: var(--ink-faint); font-size: 9px; font-weight: 650; }
-      .picker-row { display: flex; width: 100%; min-height: 34px; align-items: center; gap: 8px; padding: 0 8px; border-radius: 6px; color: var(--ink); background: transparent; font-size: 11px; text-align: left; }
-      .picker-row:hover, .picker-row.active { background: var(--hover); }
-      .picker-row span:last-child { margin-left: auto; color: var(--ink-faint); font-size: 9px; }
-      .picker-divider { height: 1px; margin: 5px 3px; background: var(--line); }
+      .new-chat-path { display: flex; align-items: center; gap: 6px; margin: -9px 0 18px; color: var(--ink-faint); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .new-chat-path .icon { color: var(--ink-soft); }
 
       /* Context menu */
       .context-menu {
@@ -529,12 +514,13 @@
               <div data-sidebar></div>
               <main class="workspace">
                 <header class="workspace-head">
-                  <div class="workspace-heading"><h1>New Chat</h1><span class="workspace-project">berryon</span></div>
+                  <div class="workspace-heading"><h1>New Chat</h1><span class="workspace-project">new-chat</span></div>
                   <div class="workspace-head-actions"><button class="icon-button" type="button" title="会话菜单"><svg class="icon"><use href="#i-more"/></svg></button></div>
                 </header>
                 <section class="empty-chat">
                   <div class="new-chat-stack">
-                    <div class="new-chat-copy"><h2>开始处理什么？</h2><p>新会话属于当前项目；模型和模式将在发送第一条消息时保存到该会话。</p></div>
+                    <div class="new-chat-copy"><h2>开始处理什么？</h2><p>这是一个全新的空项目。发送第一条消息后，Agent 会在自己的工作目录中开始工作。</p></div>
+                    <div class="new-chat-path"><svg class="icon small"><use href="#i-folder"/></svg>~/Heymoss/2026-08-03/new-chat</div>
                     <form class="composer">
                       <textarea aria-label="消息" placeholder="描述任务，或输入 @ 引用项目文件"></textarea>
                       <div class="composer-bar">
@@ -542,20 +528,12 @@
                         <button class="composer-choice" type="button">DeepSeek V4 Pro<svg class="icon small"><use href="#i-chevron-down"/></svg></button>
                         <button class="composer-choice" type="button">Ask<svg class="icon small"><use href="#i-chevron-down"/></svg></button>
                         <span class="composer-spacer"></span>
-                        <button class="composer-choice project-choice" type="button"><svg class="icon small"><use href="#i-folder"/></svg>berryon<svg class="icon small"><use href="#i-chevron-down"/></svg></button>
+                        <button class="composer-choice project-choice" type="button"><svg class="icon small"><use href="#i-folder"/></svg>Open another folder…</button>
                         <button class="send-button" type="button"><svg class="icon small"><use href="#i-send"/></svg></button>
                       </div>
                     </form>
                   </div>
                 </section>
-                <div class="project-picker" aria-label="项目选择器">
-                  <div class="picker-label">Create chat in</div>
-                  <button class="picker-row active" type="button"><svg class="icon"><use href="#i-folder"/></svg>berryon<span>Current</span></button>
-                  <button class="picker-row" type="button"><svg class="icon"><use href="#i-folder"/></svg>pi-agent-gui</button>
-                  <button class="picker-row" type="button"><svg class="icon"><use href="#i-folder"/></svg>our-menu</button>
-                  <div class="picker-divider"></div>
-                  <button class="picker-row" type="button"><svg class="icon"><use href="#i-plus"/></svg>Open another folder…</button>
-                </div>
               </main>
             </div>
           </section>

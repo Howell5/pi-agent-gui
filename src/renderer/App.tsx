@@ -84,8 +84,8 @@ function Sidebar(props: {
   expandedProjects: Set<string>
   onToggleSidebar: () => void
   onOpenProject: () => void
-  onNewTask: () => void
-  onNewTaskForProject: (projectId: string) => void
+  onNewChat: () => void
+  onNewSessionForProject: (projectId: string) => void
   onSelectProject: (projectId: string) => void
   onSelectTask: (task: Task) => void
   onTaskAction: (task: Task, action: TaskAction) => void
@@ -105,7 +105,7 @@ function Sidebar(props: {
         <button className="heymoss-brand-button" type="button">Heymoss <ChevronDown className="size-3.5" /></button>
         <div className="heymoss-brand-actions"><Button variant="ghost" size="icon-sm" className="heymoss-icon-button" title="搜索"><Search className="size-4" /></Button><Button variant="ghost" size="icon-sm" className="heymoss-icon-button" onClick={props.onToggleSidebar} title="收起侧栏"><PanelLeftClose className="size-4" /></Button></div>
       </header>
-      <button className="heymoss-new-chat" type="button" onClick={props.onNewTask}><MessageSquarePlus className="size-4" /><span>New Chat</span><kbd>⌘ N</kbd></button>
+      <button className="heymoss-new-chat" type="button" onClick={props.onNewChat}><MessageSquarePlus className="size-4" /><span>New Chat</span><kbd>⌘ N</kbd></button>
       <ScrollArea className="heymoss-sidebar-scroll">
         <div className="heymoss-sidebar-list">
           <div className="heymoss-sidebar-section"><span>Projects</span><Button variant="ghost" size="icon-xs" className="heymoss-row-action" onClick={props.onOpenProject} title="打开项目"><Plus className="size-3.5" /></Button></div>
@@ -117,7 +117,7 @@ function Sidebar(props: {
               <section className="heymoss-project" key={project.id}>
                 <div className={cn("heymoss-project-row", project.id === props.activeProject?.id && "is-active")}>
                   <button className="heymoss-project-main" type="button" onClick={() => { props.onSelectProject(project.id); props.onToggleProject(project.id) }}><span className="heymoss-disclosure">{expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</span>{expanded ? <FolderOpen className="heymoss-folder-icon size-4" /> : <Folder className="heymoss-folder-icon size-4" />}<span className="heymoss-project-copy">{project.displayName}</span></button>
-                  <div className="heymoss-project-actions"><Button variant="ghost" size="icon-xs" className="heymoss-row-action" onClick={() => props.onNewTaskForProject(project.id)} title="新建会话"><Plus className="size-3.5" /></Button><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon-xs" className="heymoss-row-action" title="项目菜单"><MoreHorizontal className="size-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => props.onNewTaskForProject(project.id)}><MessageSquarePlus className="size-3.5" />New Chat</DropdownMenuItem><DropdownMenuItem onSelect={() => props.onOpenInstructions(project)}><FileText className="size-3.5" />Project Instructions</DropdownMenuItem><DropdownMenuItem onSelect={() => void navigator.clipboard.writeText(project.path)}><ExternalLink className="size-3.5" />Copy project path</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
+                  <div className="heymoss-project-actions"><Button variant="ghost" size="icon-xs" className="heymoss-row-action" onClick={() => props.onNewSessionForProject(project.id)} title="新建会话"><Plus className="size-3.5" /></Button><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon-xs" className="heymoss-row-action" title="项目菜单"><MoreHorizontal className="size-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => props.onNewSessionForProject(project.id)}><MessageSquarePlus className="size-3.5" />New session</DropdownMenuItem><DropdownMenuItem onSelect={() => props.onOpenInstructions(project)}><FileText className="size-3.5" />Project Instructions</DropdownMenuItem><DropdownMenuItem onSelect={() => void navigator.clipboard.writeText(project.path)}><ExternalLink className="size-3.5" />Copy project path</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
                 </div>
                 {expanded && <div className="heymoss-session-list"><div className="heymoss-session-label">Sessions</div>{projectTasks.length ? projectTasks.map((task) => <TaskRow key={task.id} task={task} active={task.id === props.activeTaskId} onSelect={() => props.onSelectTask(task)} onAction={(action) => props.onTaskAction(task, action)} />) : <div className="heymoss-session-empty">还没有会话</div>}</div>}
               </section>
@@ -341,16 +341,24 @@ export function App() {
     }
   }
 
-  function newTask(): void {
-    if (!activeProject) {
-      void openProject()
-      return
-    }
+  function newSession(): void {
+    if (!activeProject) return
     setActiveTaskId(null)
     setDraft(true)
     setWorkspaceView("chat")
     setModelKey(activeTask ? taskModelKey(activeTask) : modelKey || firstModel(snapshot))
     setPermissionMode(activeTask?.permissionMode ?? permissionMode)
+  }
+
+  async function newChat(): Promise<void> {
+    try {
+      const value = await window.appApi.createManagedProject()
+      setProjectSnapshot(value, value.activeProjectId)
+      setWorkspaceView("chat")
+      setError("")
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    }
   }
 
   async function newTaskForProject(projectId: string): Promise<void> {
@@ -409,7 +417,7 @@ export function App() {
       }
       const updated = action === "pin" || action === "unpin" ? await window.appApi.setTaskPinned({ taskId: task.id, pinned: action === "pin" }) : await window.appApi.archiveTask({ taskId: task.id, archived: action === "archive" })
       setSnapshot((current) => current ? { ...current, tasks: current.tasks.map((item) => item.id === updated.id ? updated : item) } : current)
-      if (action === "archive" && task.id === activeTaskId) newTask()
+      if (action === "archive" && task.id === activeTaskId) newSession()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
     }
@@ -431,7 +439,7 @@ export function App() {
     try {
       const next = await window.appApi.deleteTask(deleteTaskId)
       setSnapshot(next)
-      if (deleteTaskId === activeTaskId) newTask()
+      if (deleteTaskId === activeTaskId) newSession()
       setDeleteTaskId(null)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
@@ -484,7 +492,7 @@ export function App() {
 
   return (
     <div className="heymoss-app-shell">
-      {sidebarOpen ? <Sidebar snapshot={snapshot} activeProject={activeProject} activeTaskId={activeTaskId} expandedProjects={expandedProjects} onToggleSidebar={() => setSidebarOpen(false)} onOpenProject={() => void openProject()} onNewTask={newTask} onNewTaskForProject={(id) => void newTaskForProject(id)} onSelectProject={(id) => void selectProject(id)} onSelectTask={(task) => void selectTask(task)} onTaskAction={(task, action) => void handleTaskAction(task, action)} onOpenProviders={() => setWorkspaceView("providers")} onOpenInstructions={async (project) => { if (project.id !== snapshot.activeProjectId) { try { const next = await window.appApi.selectProject(project.id); setSnapshot(next) } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); return } } setWorkspaceView("instructions") }} onToggleProject={(id) => setExpandedProjects((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next })} /> : <button className="heymoss-sidebar-reopen" type="button" onClick={() => setSidebarOpen(true)} title="展开侧栏"><PanelLeftOpen className="size-4" /></button>}
+      {sidebarOpen ? <Sidebar snapshot={snapshot} activeProject={activeProject} activeTaskId={activeTaskId} expandedProjects={expandedProjects} onToggleSidebar={() => setSidebarOpen(false)} onOpenProject={() => void openProject()} onNewChat={() => void newChat()} onNewSessionForProject={(id) => void newTaskForProject(id)} onSelectProject={(id) => void selectProject(id)} onSelectTask={(task) => void selectTask(task)} onTaskAction={(task, action) => void handleTaskAction(task, action)} onOpenProviders={() => setWorkspaceView("providers")} onOpenInstructions={async (project) => { if (project.id !== snapshot.activeProjectId) { try { const next = await window.appApi.selectProject(project.id); setSnapshot(next) } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); return } } setWorkspaceView("instructions") }} onToggleProject={(id) => setExpandedProjects((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next })} /> : <button className="heymoss-sidebar-reopen" type="button" onClick={() => setSidebarOpen(true)} title="展开侧栏"><PanelLeftOpen className="size-4" /></button>}
       <main className={cn("heymoss-main", !sidebarOpen && "is-sidebar-collapsed")}>
         {workspaceView === "providers" ? <ProviderSettings snapshot={snapshot} onSnapshot={setSnapshot} onClose={() => setWorkspaceView("chat")} /> : workspaceView === "instructions" && projectForInstructions ? <ProjectInstructions project={projectForInstructions} onSaved={setSnapshot} onClose={() => setWorkspaceView("chat")} /> : !activeProject ? <div className="heymoss-empty-project"><div><div className="heymoss-empty-mark">H</div><h1>从一个项目开始</h1><p>选择任意本地文件夹，让 Pi Agent 在其中工作。</p><Button onClick={() => void openProject()}><FolderOpen className="size-4" />打开文件夹</Button></div></div> : <div className="heymoss-chat-workspace">
           <header className="heymoss-workspace-header"><div className="heymoss-workspace-heading"><h1>{activeTask?.title ?? "New Chat"}</h1><span>{activeProject.displayName}</span></div><div className="heymoss-workspace-actions">{activeTask?.status === "running" && <span className="heymoss-working"><span className="heymoss-status-spinner" />Working</span>}<Button variant="ghost" size="icon-sm" className="heymoss-icon-button" onClick={() => setWorkspaceView("instructions")} title="Project Instructions"><FileText className="size-3.5" /></Button></div></header>

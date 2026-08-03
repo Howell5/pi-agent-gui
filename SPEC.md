@@ -16,11 +16,13 @@
 
 核心价值只有一条：
 
-> 选择文件夹 → 配置模型服务 → 选择模型 → 创建任务 → Agent 在项目目录内工作。
+> New Chat 创建空项目（或打开一个已有文件夹）→ 配置模型服务 → 选择模型 → 创建会话 → Agent 在项目目录内工作。
 
 ## 2. 已确定的产品原则
 
 - 项目（Project）就是一个本地文件夹，可以是任意文件夹。
+- 顶部 New Chat 创建的是全新的空项目，不是在当前项目中追加一个会话。
+- New Chat 默认在 `~/Heymoss/YYYY-MM-DD/new-chat[-N]` 创建项目目录；用户也可以通过打开项目选择已有工作目录。
 - 不要求项目是 Git 仓库。
 - 不在产品 UI 中建立 Workspace 概念；`workspace` 只允许作为底层 SDK 或运行时变量。
 - Git 不是核心数据模型。用户提到 Git 操作时，Agent 通过 Shell 调用 Git。
@@ -54,6 +56,7 @@ type Project = {
   path: string
   displayName: string
   lastOpenedAt: number
+  origin?: 'managed' | 'external'
 }
 ```
 

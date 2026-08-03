@@ -28,6 +28,7 @@ export interface Project {
   displayName: string
   lastOpenedAt: number
   instructions?: string
+  origin?: 'managed' | 'external'
 }
 
 export type UiMessageRole = 'user' | 'assistant' | 'tool' | 'system' | 'approval'
@@ -76,6 +77,7 @@ export interface AppSnapshot {
 export interface AppApi {
   getSnapshot(): Promise<AppSnapshot>
   openProject(): Promise<AppSnapshot>
+  createManagedProject(): Promise<AppSnapshot>
   selectProject(projectId: string): Promise<AppSnapshot>
   pickFile(projectId: string): Promise<string | null>
   createTask(input: {
