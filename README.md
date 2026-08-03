@@ -38,6 +38,14 @@ corepack pnpm@9.15.0 dist:mac
 
 The unsigned DMG is generated under `dist/`. Release checksums are generated with `pnpm hash:release` after copying the DMG into `release/`.
 
+## Install the unsigned build
+
+Download the Apple Silicon DMG from the GitHub Release, open it, and drag `Pi Agent GUI.app` to Applications. Because the build is unsigned, use Control-click → Open on the first launch. Configure a Provider token from the plug icon before starting a Task. Verify the download before opening it:
+
+```bash
+shasum -a 256 Pi-Agent-GUI-0.1.0-arm64.dmg
+```
+
 ## Architecture
 
 The Renderer talks to Electron Main over typed IPC. Main owns filesystem access, permissions, safeStorage and the Pi Worker lifecycle. Each active task has an isolated worker, and the worker uses Pi's `createAgentSession` and `SessionManager` directly.
