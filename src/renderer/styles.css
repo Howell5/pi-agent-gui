@@ -214,7 +214,6 @@ button:disabled {
   max-width: none;
   margin: 0 0 8px;
   padding: 4px 0;
-  border-top: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
 }
 
