@@ -59,6 +59,7 @@ type Project = {
   displayName: string
   lastOpenedAt: number
   origin?: 'managed' | 'external' | 'temporary'
+  hidden?: boolean // removed from Projects; the folder and sessions remain on disk
 }
 ```
 
@@ -166,7 +167,8 @@ GPT-5 Codex
 
 ### 主界面
 
-- 左栏：最近项目、当前项目任务列表。
+- 左栏：Projects、Pinned、Recents。Projects 下显示已绑定项目的 Session；Recents 只显示未绑定项目的临时会话。
+- 从 Project 菜单移除项目只会把它标记为 hidden，不删除项目文件或 Session；重新打开同一文件夹会恢复显示。
 - 主区：对话消息、工具事件、授权卡片、输入框。
 - 不提供固定第三栏。
 

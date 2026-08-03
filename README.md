@@ -7,6 +7,7 @@ A small, local-first Agent GUI built around Pi Agent.
 - Any local folder can be a project; Git is optional.
 - **New Chat** starts as an unscoped preview. Choosing a Project assigns the new Session to it; leaving it unscoped creates a temporary `temp-chat-*` workspace only when the first message is sent. Temporary Chats appear in Recents, not Projects.
 - A project can contain multiple Sessions; each Session keeps its own model and Ask/Auto mode.
+- A project can be removed from Projects without deleting its folder or sessions; its sessions remain accessible through Recents as unbound conversations. Opening the folder again restores the Project entry.
 - Session settings can be changed while idle and are restored when the Session is reopened.
 - DeepSeek and OpenAI are built-in Provider Catalog entries.
 - The conversation model picker is flat; Provider routing stays internal.

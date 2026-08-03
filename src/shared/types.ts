@@ -29,6 +29,8 @@ export interface Project {
   lastOpenedAt: number
   instructions?: string
   origin?: 'managed' | 'external' | 'temporary'
+  /** Hidden from Projects without touching the folder or its sessions. */
+  hidden?: boolean
 }
 
 export type UiMessageRole = 'user' | 'assistant' | 'tool' | 'system' | 'approval'
@@ -99,6 +101,7 @@ export interface AppApi {
   setTaskPinned(input: { taskId: string; pinned: boolean }): Promise<Task>
   archiveTask(input: { taskId: string; archived: boolean }): Promise<Task>
   deleteTask(taskId: string): Promise<AppSnapshot>
+  removeProject(projectId: string): Promise<AppSnapshot>
   updateProjectInstructions(input: { projectId: string; instructions: string }): Promise<AppSnapshot>
   saveBuiltinProviderToken(providerId: 'deepseek' | 'openai', token: string): Promise<AppSnapshot>
   testProvider(providerId: string): Promise<{ ok: boolean; message: string }>

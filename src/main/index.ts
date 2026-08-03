@@ -332,6 +332,7 @@ function registerIpc(): void {
       lastOpenedAt: now(),
       origin: 'external',
     }
+    project.hidden = false
     project.lastOpenedAt = now()
     store.upsertProject(project)
     return broadcast()
@@ -359,6 +360,12 @@ function registerIpc(): void {
   ipcMain.handle('app:selectProject', (_event, projectId: string) => {
     if (!store.findProject(projectId)) throw new Error('Project not found')
     store.setActiveProject(projectId)
+    return broadcast()
+  })
+
+  ipcMain.handle('app:removeProject', (_event, projectId: string) => {
+    store.hideProject(projectId)
+    store.log(`removed project ${projectId} from Projects (folder and sessions preserved)`)
     return broadcast()
   })
 

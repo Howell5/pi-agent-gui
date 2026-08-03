@@ -91,13 +91,22 @@ function Sidebar(props: {
   onTaskAction: (task: Task, action: TaskAction) => void
   onOpenProviders: () => void
   onOpenInstructions: (project: Project) => void
+  onRemoveProject: (projectId: string) => void
   onToggleProject: (projectId: string) => void
 }) {
-  const projects = props.snapshot.projects.filter((project) => project.origin !== "temporary")
+  const projects = props.snapshot.projects.filter((project) => project.origin !== "temporary" && !project.hidden)
   const projectById = new Map(props.snapshot.projects.map((project) => [project.id, project]))
   const tasks = props.snapshot.tasks.filter((task) => !task.archived)
   const pinned = tasks.filter((task) => task.pinned).sort((a, b) => b.updatedAt - a.updatedAt)
-  const recents = tasks.filter((task) => !task.pinned).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 8)
+  const isUnboundTask = (task: Task): boolean => {
+    const project = projectById.get(task.projectId)
+    return !project || project.origin === "temporary" || Boolean(project.hidden)
+  }
+  const recents = tasks.filter((task) => !task.pinned && isUnboundTask(task)).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 8)
+  const visibleProjectForTask = (task: Task): Project | undefined => {
+    const project = projectById.get(task.projectId)
+    return project && project.origin !== "temporary" && !project.hidden ? project : undefined
+  }
 
   return (
     <aside className="heymoss-sidebar">
@@ -118,16 +127,16 @@ function Sidebar(props: {
               <section className="heymoss-project" key={project.id}>
                 <div className={cn("heymoss-project-row", project.id === props.activeProject?.id && "is-active")}>
                   <button className="heymoss-project-main" type="button" onClick={() => { props.onSelectProject(project.id); props.onToggleProject(project.id) }}><span className="heymoss-disclosure">{expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</span>{expanded ? <FolderOpen className="heymoss-folder-icon size-4" /> : <Folder className="heymoss-folder-icon size-4" />}<span className="heymoss-project-copy">{project.displayName}</span></button>
-                  <div className="heymoss-project-actions"><Button variant="ghost" size="icon-xs" className="heymoss-row-action" onClick={() => props.onNewSessionForProject(project.id)} title="新建会话"><Plus className="size-3.5" /></Button><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon-xs" className="heymoss-row-action" title="项目菜单"><MoreHorizontal className="size-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => props.onNewSessionForProject(project.id)}><MessageSquarePlus className="size-3.5" />New session</DropdownMenuItem><DropdownMenuItem onSelect={() => props.onOpenInstructions(project)}><FileText className="size-3.5" />Project Instructions</DropdownMenuItem><DropdownMenuItem onSelect={() => void navigator.clipboard.writeText(project.path)}><ExternalLink className="size-3.5" />Copy project path</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
+                  <div className="heymoss-project-actions"><Button variant="ghost" size="icon-xs" className="heymoss-row-action" onClick={() => props.onNewSessionForProject(project.id)} title="新建会话"><Plus className="size-3.5" /></Button><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon-xs" className="heymoss-row-action" title="项目菜单"><MoreHorizontal className="size-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => props.onNewSessionForProject(project.id)}><MessageSquarePlus className="size-3.5" />New session</DropdownMenuItem><DropdownMenuItem onSelect={() => props.onOpenInstructions(project)}><FileText className="size-3.5" />Project Instructions</DropdownMenuItem><DropdownMenuItem onSelect={() => void navigator.clipboard.writeText(project.path)}><ExternalLink className="size-3.5" />Copy project path</DropdownMenuItem><DropdownMenuSeparator /><DropdownMenuItem onSelect={() => props.onRemoveProject(project.id)}><X className="size-3.5" />Remove from Projects</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
                 </div>
                 {expanded && <div className="heymoss-session-list">{projectTasks.length ? projectTasks.map((task) => <TaskRow key={task.id} task={task} active={task.id === props.activeTaskId} onSelect={() => props.onSelectTask(task)} onAction={(action) => props.onTaskAction(task, action)} />) : <div className="heymoss-session-empty">还没有会话</div>}</div>}
               </section>
             )
           })}
           <div className="heymoss-sidebar-section"><span>Pinned</span></div>
-          {pinned.length ? pinned.map((task) => <TaskRow key={"pinned-" + task.id} task={task} project={projectById.get(task.projectId)} compact active={task.id === props.activeTaskId} onSelect={() => props.onSelectTask(task)} onAction={(action) => props.onTaskAction(task, action)} />) : <div className="heymoss-sidebar-empty">固定的会话会出现在这里。</div>}
+          {pinned.length ? pinned.map((task) => <TaskRow key={"pinned-" + task.id} task={task} project={visibleProjectForTask(task)} compact active={task.id === props.activeTaskId} onSelect={() => props.onSelectTask(task)} onAction={(action) => props.onTaskAction(task, action)} />) : <div className="heymoss-sidebar-empty">固定的会话会出现在这里。</div>}
           <div className="heymoss-sidebar-section"><span>Recents</span></div>
-          {recents.length ? recents.map((task) => <TaskRow key={"recent-" + task.id} task={task} project={projectById.get(task.projectId)} compact={task.projectId !== props.activeProject?.id} active={task.id === props.activeTaskId} onSelect={() => props.onSelectTask(task)} onAction={(action) => props.onTaskAction(task, action)} />) : <div className="heymoss-sidebar-empty">最近的会话会出现在这里。</div>}
+          {recents.length ? recents.map((task) => <TaskRow key={"recent-" + task.id} task={task} project={visibleProjectForTask(task)} compact={task.projectId !== props.activeProject?.id} active={task.id === props.activeTaskId} onSelect={() => props.onSelectTask(task)} onAction={(action) => props.onTaskAction(task, action)} />) : <div className="heymoss-sidebar-empty">未绑定项目的临时会话会出现在这里。</div>}
         </div>
       </ScrollArea>
       <footer className="heymoss-sidebar-user"><span className="heymoss-avatar">WH</span><span className="heymoss-user-name">will hong</span><Button variant="ghost" size="icon-sm" className="heymoss-icon-button" onClick={props.onOpenProviders} title="设置"><Settings2 className="size-3.5" /></Button></footer>
@@ -346,6 +355,29 @@ export function App() {
     }
   }
 
+  async function removeProject(projectId: string): Promise<void> {
+    try {
+      const wasActive = projectId === snapshot?.activeProjectId
+      const value = await window.appApi.removeProject(projectId)
+      setSnapshot(value)
+      setExpandedProjects((current) => {
+        const next = new Set(current)
+        next.delete(projectId)
+        return next
+      })
+      if (wasActive) {
+        setActiveTaskId(null)
+        setDraft(true)
+        setNewChatMode(false)
+        setWorkspaceView("chat")
+        setModelKey(firstModel(value))
+        setPermissionMode("ask")
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    }
+  }
+
   function newSession(): void {
     if (!activeProject) return
     setActiveTaskId(null)
@@ -526,17 +558,17 @@ export function App() {
   }
 
   if (!snapshot) return <div className="heymoss-loading">Loading…</div>
-  const projectForInstructions = activeProject?.origin === "temporary" ? null : activeProject
+  const projectForInstructions = activeProject?.origin === "temporary" || activeProject?.hidden ? null : activeProject
   const showChatPreview = Boolean(activeProject) || newChatMode
-  const projectOptions = snapshot.projects.filter((project) => project.origin !== "temporary")
+  const projectOptions = snapshot.projects.filter((project) => project.origin !== "temporary" && !project.hidden)
 
   return (
     <div className="heymoss-app-shell">
-      {sidebarOpen ? <Sidebar snapshot={snapshot} activeProject={activeProject} activeTaskId={activeTaskId} expandedProjects={expandedProjects} onToggleSidebar={() => setSidebarOpen(false)} onOpenProject={() => void openProject()} onNewChat={() => void newChat()} onNewSessionForProject={(id) => void newTaskForProject(id)} onSelectProject={(id) => void selectProject(id)} onSelectTask={(task) => void selectTask(task)} onTaskAction={(task, action) => void handleTaskAction(task, action)} onOpenProviders={() => setWorkspaceView("providers")} onOpenInstructions={async (project) => { if (project.id !== snapshot.activeProjectId) { try { const next = await window.appApi.selectProject(project.id); setSnapshot(next) } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); return } } setWorkspaceView("instructions") }} onToggleProject={(id) => setExpandedProjects((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next })} /> : <button className="heymoss-sidebar-reopen" type="button" onClick={() => setSidebarOpen(true)} title="展开侧栏"><PanelLeftOpen className="size-4" /></button>}
+      {sidebarOpen ? <Sidebar snapshot={snapshot} activeProject={activeProject} activeTaskId={activeTaskId} expandedProjects={expandedProjects} onToggleSidebar={() => setSidebarOpen(false)} onOpenProject={() => void openProject()} onNewChat={() => void newChat()} onNewSessionForProject={(id) => void newTaskForProject(id)} onSelectProject={(id) => void selectProject(id)} onSelectTask={(task) => void selectTask(task)} onTaskAction={(task, action) => void handleTaskAction(task, action)} onOpenProviders={() => setWorkspaceView("providers")} onOpenInstructions={async (project) => { if (project.id !== snapshot.activeProjectId) { try { const next = await window.appApi.selectProject(project.id); setSnapshot(next) } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); return } } setWorkspaceView("instructions") }} onRemoveProject={(id) => void removeProject(id)} onToggleProject={(id) => setExpandedProjects((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next })} /> : <button className="heymoss-sidebar-reopen" type="button" onClick={() => setSidebarOpen(true)} title="展开侧栏"><PanelLeftOpen className="size-4" /></button>}
       <main className={cn("heymoss-main", !sidebarOpen && "is-sidebar-collapsed")}>
         {workspaceView === "providers" ? <ProviderSettings snapshot={snapshot} onSnapshot={setSnapshot} onClose={() => setWorkspaceView("chat")} /> : workspaceView === "instructions" && projectForInstructions ? <ProjectInstructions project={projectForInstructions} onSaved={setSnapshot} onClose={() => setWorkspaceView("chat")} /> : !showChatPreview ? <div className="heymoss-empty-project"><div><div className="heymoss-empty-mark">H</div><h1>从一个项目开始</h1><p>选择任意本地文件夹，让 Pi Agent 在其中工作。</p><Button onClick={() => void openProject()}><FolderOpen className="size-4" />打开文件夹</Button></div></div> : <div className="heymoss-chat-workspace">
-          <header className="heymoss-workspace-header"><div className="heymoss-workspace-heading"><h1>{activeTask?.title ?? "New Chat"}</h1><span>{activeProject?.origin === "temporary" ? "No project" : activeProject?.displayName ?? "No project"}</span></div><div className="heymoss-workspace-actions">{activeTask?.status === "running" && <span className="heymoss-working"><span className="heymoss-status-spinner" />Working</span>}<Button variant="ghost" size="icon-sm" className="heymoss-icon-button" onClick={() => projectForInstructions && setWorkspaceView("instructions")} title="Project Instructions" disabled={!projectForInstructions}><FileText className="size-3.5" /></Button></div></header>
-          <AssistantThread key={activeTaskId ?? "draft-" + (activeProject?.id ?? "no-project")} task={activeTask} modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} projectOptions={projectOptions} projectId={activeProject?.origin === "temporary" ? null : activeProject?.id ?? null} showProjectPicker={newChatMode && draft} onProjectChange={chooseDraftProject} draftText={draftText} onDraftChange={updateDraft} onModelChange={(value) => { const previous = { modelKey, permissionMode }; setModelKey(value); void saveTaskSettings({ modelKey: value }, previous) }} onPermissionModeChange={(value) => { const previous = { modelKey, permissionMode }; setPermissionMode(value); void saveTaskSettings({ permissionMode: value }, previous) }} onNew={startMessage} onCancel={() => activeTaskId ? window.appApi.stopTask(activeTaskId) : Promise.resolve()} onPermission={async (approvalId, approved) => { if (activeTaskId) await window.appApi.respondPermission({ taskId: activeTaskId, approvalId, approved }) }} onRetry={retryTask} onAttachFile={attachFile} />
+          <header className="heymoss-workspace-header"><div className="heymoss-workspace-heading"><h1>{activeTask?.title ?? "New Chat"}</h1><span>{activeProject?.origin === "temporary" || activeProject?.hidden ? "No project" : activeProject?.displayName ?? "No project"}</span></div><div className="heymoss-workspace-actions">{activeTask?.status === "running" && <span className="heymoss-working"><span className="heymoss-status-spinner" />Working</span>}<Button variant="ghost" size="icon-sm" className="heymoss-icon-button" onClick={() => projectForInstructions && setWorkspaceView("instructions")} title="Project Instructions" disabled={!projectForInstructions}><FileText className="size-3.5" /></Button></div></header>
+          <AssistantThread key={activeTaskId ?? "draft-" + (activeProject?.id ?? "no-project")} task={activeTask} modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} projectOptions={projectOptions} projectId={activeProject?.origin === "temporary" || activeProject?.hidden ? null : activeProject?.id ?? null} showProjectPicker={newChatMode && draft} onProjectChange={chooseDraftProject} draftText={draftText} onDraftChange={updateDraft} onModelChange={(value) => { const previous = { modelKey, permissionMode }; setModelKey(value); void saveTaskSettings({ modelKey: value }, previous) }} onPermissionModeChange={(value) => { const previous = { modelKey, permissionMode }; setPermissionMode(value); void saveTaskSettings({ permissionMode: value }, previous) }} onNew={startMessage} onCancel={() => activeTaskId ? window.appApi.stopTask(activeTaskId) : Promise.resolve()} onPermission={async (approvalId, approved) => { if (activeTaskId) await window.appApi.respondPermission({ taskId: activeTaskId, approvalId, approved }) }} onRetry={retryTask} onAttachFile={attachFile} />
           {error && <Alert variant="destructive" className="heymoss-error-alert"><AlertTitle>需要注意</AlertTitle><AlertDescription>{error}</AlertDescription><Button variant="ghost" size="icon-xs" onClick={() => setError("")}><X className="size-3.5" /></Button></Alert>}
         </div>}
       </main>

@@ -131,6 +131,14 @@ export class AppStore {
     this.save()
   }
 
+  hideProject(id: string): void {
+    const project = this.findProject(id)
+    if (!project) throw new Error('Project not found')
+    project.hidden = true
+    if (this.state.activeProjectId === id) this.state.activeProjectId = null
+    this.save()
+  }
+
   upsertProject(project: Project): void {
     const index = this.state.projects.findIndex((item) => item.id === project.id)
     if (index === -1) this.state.projects.push(project)

@@ -18,6 +18,7 @@ const api: AppApi = {
   setTaskPinned: (input) => ipcRenderer.invoke('app:setTaskPinned', input),
   archiveTask: (input) => ipcRenderer.invoke('app:archiveTask', input),
   deleteTask: (taskId) => ipcRenderer.invoke('app:deleteTask', taskId),
+  removeProject: (projectId) => ipcRenderer.invoke('app:removeProject', projectId),
   updateProjectInstructions: (input) => ipcRenderer.invoke('app:updateProjectInstructions', input),
   saveBuiltinProviderToken: (providerId, token) => ipcRenderer.invoke('app:saveBuiltinProviderToken', providerId, token),
   testProvider: (providerId) => ipcRenderer.invoke('app:testProvider', providerId),

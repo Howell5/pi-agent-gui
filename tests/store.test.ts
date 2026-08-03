@@ -33,4 +33,26 @@ describe('JSON task persistence', () => {
       rmSync(root, { recursive: true, force: true })
     }
   })
+
+  it('hides a project without deleting its folder or sessions', () => {
+    const root = mkdtempSync(join(tmpdir(), 'pi-agent-gui-project-'))
+    try {
+      const store = new AppStore(root)
+      store.upsertProject({
+        id: 'project-1',
+        path: root,
+        displayName: 'Demo',
+        lastOpenedAt: Date.now(),
+        origin: 'external',
+      })
+      store.hideProject('project-1')
+
+      expect(store.findProject('project-1')?.hidden).toBe(true)
+      expect(store.activeProjectId).toBeNull()
+      expect(existsSync(root)).toBe(true)
+      expect(existsSync(join(root, 'projects.json'))).toBe(true)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
 })
