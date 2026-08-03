@@ -89,8 +89,11 @@
       .icon-button:hover { color: var(--ink); background: var(--surface-muted); }
       .app-body { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 0; flex: 1; }
       .sidebar { display: flex; min-height: 0; flex-direction: column; border-right: 1px solid var(--line); background: #f2f4f7; }
-      .sidebar-head { display: flex; height: 40px; flex: 0 0 auto; align-items: center; justify-content: space-between; padding: 0 12px 0 15px; color: var(--ink-faint); font-size: 11px; font-weight: 650; letter-spacing: .13em; text-transform: uppercase; }
-      .sidebar-scroll { min-height: 0; flex: 1; overflow: auto; padding: 5px 8px 18px; }
+      .sidebar-new-chat { display: flex; height: 44px; flex: 0 0 auto; align-items: center; justify-content: space-between; margin: 5px 8px 2px; padding: 0 9px; border-radius: 8px; color: var(--ink); background: transparent; font-size: 12px; font-weight: 600; text-align: left; }
+      .sidebar-new-chat:hover { background: var(--accent-soft); }
+      .sidebar-new-chat span:first-child { display: flex; align-items: center; gap: 8px; }
+      .sidebar-new-chat .new-chat-icon { color: var(--ink-soft); font-size: 15px; }
+      .sidebar-scroll { min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; padding: 4px 8px 14px; }
       .sidebar-section { display: flex; min-height: 30px; align-items: center; justify-content: space-between; padding: 0 8px; color: var(--ink-faint); font-size: 11px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; }
       .sidebar-section-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 150ms ease; }
       .sidebar-section:hover .sidebar-section-actions { opacity: 1; }
@@ -114,7 +117,13 @@
       .status-dot.idle { background: var(--accent); }
       .status-dot.running { border: 1.5px solid var(--accent); border-top-color: transparent; background: transparent; animation: spin 800ms linear infinite; }
       .status-dot.waiting { background: var(--warning); }
-      .sidebar-foot { padding: 10px 12px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 10px; }
+      .sidebar-user { display: flex; height: 48px; flex: 0 0 auto; align-items: center; gap: 8px; padding: 0 12px; border-top: 1px solid var(--line); background: #f2f4f7; }
+      .user-avatar { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; color: #fff; background: #88966f; font-size: 9px; font-weight: 700; }
+      .sidebar-user-copy { min-width: 0; flex: 1; }
+      .sidebar-user-copy strong, .sidebar-user-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .sidebar-user-copy strong { color: var(--ink); font-size: 11px; font-weight: 620; }
+      .sidebar-user-copy small { margin-top: 1px; color: var(--ink-faint); font-size: 9px; }
+      .sidebar-user .tiny-button { color: var(--ink-faint); }
       @keyframes spin { to { transform: rotate(360deg); } }
 
       .workspace { display: flex; min-width: 0; min-height: 0; flex-direction: column; background: var(--surface); }
@@ -173,35 +182,21 @@
       .composer textarea { width: 100%; min-height: 55px; resize: none; padding: 10px 2px 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 13px; line-height: 1.5; }
       .composer textarea::placeholder { color: var(--ink-faint); }
 
-      /* Inbox */
-      .inbox-frame { display: grid; grid-template-columns: 252px minmax(0, 1fr) 300px; width: 100%; height: 100%; }
-      .inbox-side { display: flex; min-height: 0; flex-direction: column; border-right: 1px solid var(--line); background: #f2f4f7; }
-      .inbox-side-head { display: flex; height: 49px; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); }
-      .inbox-side-head strong { font-size: 14px; }
-      .inbox-side-list { padding: 14px 10px; }
-      .filter-row { display: flex; align-items: center; justify-content: space-between; min-height: 34px; padding: 0 9px; border-radius: 7px; color: var(--ink-soft); font-size: 12px; }
-      .filter-row.active, .filter-row:hover { color: var(--ink); background: var(--accent-soft); }
-      .filter-row span:last-child { color: var(--ink-faint); font-size: 11px; }
-      .inbox-list { min-width: 0; min-height: 0; overflow: auto; background: var(--surface); }
-      .inbox-head { display: flex; min-height: 74px; align-items: end; justify-content: space-between; padding: 0 24px 14px; border-bottom: 1px solid var(--line); }
-      .inbox-head h1 { margin: 0; font-size: 20px; font-weight: 640; letter-spacing: -.03em; }
-      .search { width: 210px; height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; font-size: 12px; }
-      .session-list { padding: 8px 14px 24px; }
-      .session-card { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto; gap: 11px; align-items: center; min-height: 72px; padding: 10px; border-bottom: 1px solid var(--line); }
-      .session-card:hover, .session-card.selected { background: #f1f5fb; }
-      .session-card h3 { margin: 0; overflow: hidden; font-size: 13px; font-weight: 620; text-overflow: ellipsis; white-space: nowrap; }
-      .session-card p { margin: 3px 0 0; overflow: hidden; color: var(--ink-faint); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-      .session-meta { display: grid; justify-items: end; gap: 4px; color: var(--ink-faint); font-size: 10px; }
-      .session-meta .model-label { max-width: 115px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .session-preview { min-width: 0; min-height: 0; overflow: auto; border-left: 1px solid var(--line); background: #fff; }
-      .preview-head { padding: 20px 18px 15px; border-bottom: 1px solid var(--line); }
-      .preview-head small { color: var(--ink-faint); font-size: 10px; }
-      .preview-head h2 { margin: 6px 0 0; font-size: 15px; font-weight: 650; }
-      .preview-body { padding: 16px 18px; }
-      .preview-section { margin-bottom: 18px; }
-      .preview-section h4 { margin: 0 0 7px; color: var(--ink-faint); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
-      .preview-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: 11px; }
-      .preview-row strong { color: var(--ink); font-weight: 600; text-align: right; }
+      /* Sidebar reference */
+      .sidebar-board-frame { display: grid; grid-template-columns: 294px minmax(0, 1fr); width: 100%; height: 100%; background: var(--surface); }
+      .sidebar-reference { display: flex; min-height: 0; flex-direction: column; border-right: 1px solid var(--line); background: #f2f4f7; }
+      .sidebar-reference .sidebar-new-chat { height: 50px; margin: 7px 10px 3px; }
+      .sidebar-reference .sidebar-scroll { padding-inline: 12px; }
+      .sidebar-reference .sidebar-section { min-height: 34px; }
+      .sidebar-reference .project-row { min-height: 38px; }
+      .sidebar-reference .session-row { min-height: 34px; }
+      .sidebar-reference .sidebar-user { height: 55px; }
+      .sidebar-reference-note { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 0 48px; }
+      .sidebar-reference-note h2 { margin: 0 0 8px; font-size: 22px; font-weight: 650; letter-spacing: -.03em; }
+      .sidebar-reference-note p { max-width: 470px; margin: 0 0 17px; color: var(--ink-soft); font-size: 12px; line-height: 1.7; }
+      .sidebar-reference-note ul { display: grid; gap: 8px; max-width: 500px; margin: 0; padding: 0; color: var(--ink-faint); font-size: 11px; list-style: none; }
+      .sidebar-reference-note li { display: flex; gap: 8px; align-items: start; }
+      .sidebar-reference-note li::before { content: "·"; color: var(--accent); font-size: 18px; line-height: 11px; }
 
       /* Provider settings */
       .settings-frame { display: grid; grid-template-columns: 250px minmax(0, 1fr); width: 100%; height: 100%; background: var(--surface); }
@@ -262,8 +257,7 @@
 
       @media (max-width: 1120px) {
         .board-main { grid-template-columns: 180px minmax(0, 1fr); }
-        .inbox-frame { grid-template-columns: 210px minmax(0, 1fr); }
-        .session-preview { display: none; }
+        .sidebar-board-frame { grid-template-columns: 250px minmax(0, 1fr); }
         .board-nav { padding-inline: 8px; }
       }
     </style>
@@ -276,7 +270,7 @@
           <span class="toolbar-label">Screen</span>
           <div class="view-tabs" role="tablist" aria-label="设计稿页面">
             <button class="active" data-view="workbench" type="button">工作台</button>
-            <button data-view="inbox" type="button">会话收件箱</button>
+            <button data-view="sidebar" type="button">侧栏导航</button>
             <button data-view="providers" type="button">模型服务</button>
             <button data-view="context" type="button">上下文</button>
           </div>
@@ -293,7 +287,7 @@
         <nav class="board-nav" aria-label="设计稿目录">
           <h2>Prototype set</h2>
           <button class="active" data-view="workbench" type="button"><span class="nav-mark">◈</span>工作台 / 对话</button>
-          <button data-view="inbox" type="button"><span class="nav-mark">≡</span>会话收件箱</button>
+          <button data-view="sidebar" type="button"><span class="nav-mark">≡</span>侧栏导航</button>
           <button data-view="providers" type="button"><span class="nav-mark">⌁</span>模型与 Provider</button>
           <button data-view="context" type="button"><span class="nav-mark">⊙</span>上下文与技能</button>
           <p class="nav-note">同一套 tokens 和间距。进入 Electron 时，布局转为 React，交互转为 Radix/ai-elements。</p>
@@ -307,13 +301,23 @@
               <header class="app-topbar"><div class="app-brand"><span class="brand-mark">H</span><span>Heymoss</span></div><div class="app-actions"><button class="icon-button" type="button" title="模型服务">⌁</button><button class="icon-button" type="button" title="打开项目">□</button><button class="icon-button" type="button" title="切换侧栏">◧</button></div></header>
               <div class="app-body">
                 <aside class="sidebar">
-                  <div class="sidebar-head"><span>项目</span><button class="icon-button" type="button" title="打开项目">＋</button></div>
+                  <button class="sidebar-new-chat" type="button"><span><span class="new-chat-icon">✎</span>New Chat</span><span class="new-chat-icon">⌘N</span></button>
                   <div class="sidebar-scroll">
                     <div class="sidebar-section"><span>Projects</span><span class="sidebar-section-actions"><button class="tiny-button" type="button">…</button><button class="tiny-button" type="button">＋</button></span></div>
                     <section class="project"><div class="project-row active"><span class="disclosure">⌄</span><span class="folder">□</span><span class="project-name">berryon</span><span class="row-actions"><button class="tiny-button" type="button">…</button><button class="tiny-button" type="button">＋</button></span></div><div class="sessions"><div class="session-label">会话</div><div class="session-row active"><span class="session-title">修复 Agent 对话渲染</span><span class="status-dot idle" title="空闲"></span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div><div class="session-row"><span class="session-title">检查项目结构</span><span class="status-dot running" title="运行中"></span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div><div class="session-row"><span class="session-title">整理输入组件</span><span class="status-dot waiting" title="等待授权"></span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></div></section>
                     <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">pi-agent-gui</span><span class="row-actions"><button class="tiny-button" type="button">…</button><button class="tiny-button" type="button">＋</button></span></div></section>
+                    <div class="sidebar-section"><span>Pinned</span><span class="sidebar-section-actions"><button class="tiny-button" type="button">＋</button></span></div>
+                    <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">Craft GUI 研究</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                    <div class="sidebar-section"><span>Recents</span><span class="sidebar-section-actions"><button class="tiny-button" type="button">…</button></span></div>
+                    <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">our-menu</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                    <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">red_video</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                    <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">personal-site</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                    <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">craft-agents</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                    <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">typeless</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                    <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">design-system</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                    <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">new-chat-sandbox</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
                   </div>
-                  <div class="sidebar-foot">项目是本地文件夹；Git 和 Worktree 不进入主导航。</div>
+                  <div class="sidebar-user"><span class="user-avatar">WH</span><span class="sidebar-user-copy"><strong>will hong</strong><small>本地工作区</small></span><button class="tiny-button" type="button" title="账户与设置">?</button></div>
                 </aside>
                 <main class="workspace">
                   <header class="workspace-head"><div class="context"><div class="context-label">berryon</div><h1>修复 Agent 对话渲染</h1></div><div class="workspace-actions"><span class="status">空闲</span><button class="quiet-button" type="button">＋ 新会话</button></div></header>
@@ -330,11 +334,30 @@
             </div>
           </section>
 
-          <section class="artboard" data-screen="inbox" aria-label="会话收件箱设计稿">
-            <div class="inbox-frame">
-              <aside class="inbox-side"><div class="inbox-side-head"><strong>会话</strong><button class="icon-button" type="button">＋</button></div><div class="inbox-side-list"><div class="filter-row active"><span>全部会话</span><span>12</span></div><div class="filter-row"><span>运行中</span><span>2</span></div><div class="filter-row"><span>需要授权</span><span>1</span></div><div class="filter-row"><span>已完成</span><span>9</span></div><div class="filter-row"><span>已归档</span><span>24</span></div></div></aside>
-              <main class="inbox-list"><header class="inbox-head"><h1>全部会话</h1><input class="search" placeholder="搜索会话" aria-label="搜索会话" /></header><div class="session-list"><article class="session-card selected"><span class="status-dot idle"></span><div><h3>修复 Agent 对话渲染</h3><p>berryon · 完成协议排查和工具摘要调整</p></div><div class="session-meta"><span>刚刚</span><span class="model-label">DeepSeek V4 Pro</span></div></article><article class="session-card"><span class="status-dot running"></span><div><h3>检查项目结构</h3><p>pi-agent-gui · 正在读取文件和运行测试</p></div><div class="session-meta"><span>2m</span><span class="model-label">OpenAI GPT-5</span></div></article><article class="session-card"><span class="status-dot waiting"></span><div><h3>整理输入组件</h3><p>berryon · 等待授权运行 pnpm test</p></div><div class="session-meta"><span>18m</span><span class="model-label">DeepSeek V4 Flash</span></div></article><article class="session-card"><span class="status-dot"></span><div><h3>增加 Provider 配置说明</h3><p>pi-agent-gui · 已完成</p></div><div class="session-meta"><span>昨天</span><span class="model-label">DeepSeek V4 Pro</span></div></article></div></main>
-              <aside class="session-preview"><div class="preview-head"><small>berryon / 修复 Agent 对话渲染</small><h2>会话概览</h2></div><div class="preview-body"><section class="preview-section"><h4>状态</h4><div class="preview-row"><span>当前状态</span><strong>空闲</strong></div><div class="preview-row"><span>权限模式</span><strong>Ask</strong></div><div class="preview-row"><span>模型</span><strong>DeepSeek V4 Pro</strong></div></section><section class="preview-section"><h4>最近工作</h4><div class="preview-row"><span>运行时长</span><strong>2m 18s</strong></div><div class="preview-row"><span>工具事件</span><strong>13</strong></div><div class="preview-row"><span>最后更新</span><strong>刚刚</strong></div></section><button class="primary-button" type="button">打开会话</button></div></aside>
+          <section class="artboard" data-screen="sidebar" aria-label="侧栏导航设计稿">
+            <div class="sidebar-board-frame">
+              <aside class="sidebar-reference">
+                <button class="sidebar-new-chat" type="button"><span><span class="new-chat-icon">✎</span>New Chat</span><span class="new-chat-icon">⌘N</span></button>
+                <div class="sidebar-scroll">
+                  <div class="sidebar-section"><span>Projects</span><span class="sidebar-section-actions"><button class="tiny-button" type="button">…</button><button class="tiny-button" type="button">＋</button></span></div>
+                  <section class="project"><div class="project-row active"><span class="disclosure">⌄</span><span class="folder">□</span><span class="project-name">berryon</span><span class="row-actions"><button class="tiny-button" type="button">…</button><button class="tiny-button" type="button">＋</button></span></div><div class="sessions"><div class="session-row active"><span class="session-title">修复 Agent 对话渲染</span><span class="status-dot idle"></span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div><div class="session-row"><span class="session-title">检查项目结构</span><span class="status-dot running"></span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div><div class="session-row"><span class="session-title">整理输入组件</span><span class="status-dot waiting"></span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></div></section>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">pi-agent-gui</span><span class="row-actions"><button class="tiny-button" type="button">…</button><button class="tiny-button" type="button">＋</button></span></div></section>
+                  <div class="sidebar-section"><span>Pinned</span><span class="sidebar-section-actions"><button class="tiny-button" type="button">＋</button></span></div>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">Craft GUI 研究</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                  <div class="sidebar-section"><span>Recents</span><span class="sidebar-section-actions"><button class="tiny-button" type="button">…</button></span></div>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">our-menu</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">red_video</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">personal-site</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">red-shots-extension</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">personal-site</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">craft-agents</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">typeless</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">design-system</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                  <section class="project"><div class="project-row"><span class="disclosure">›</span><span class="folder">□</span><span class="project-name">new-chat-sandbox</span><span class="row-actions"><button class="tiny-button" type="button">…</button></span></div></section>
+                </div>
+                <div class="sidebar-user"><span class="user-avatar">WH</span><span class="sidebar-user-copy"><strong>will hong</strong><small>本地工作区</small></span><button class="tiny-button" type="button">?</button></div>
+              </aside>
+              <section class="sidebar-reference-note"><h2>Sidebar navigation</h2><p>这里不再有独立的 Session 收件箱。项目是一级对象，Session 只在项目展开后出现；用户始终能从同一个窄侧栏回到最近工作。</p><ul><li>New Chat 固定在顶部，作为唯一主入口。</li><li>Projects、Pinned、Recents 共享一个滚动区域。</li><li>用户区固定在底部，滚动条不会穿过它。</li><li>项目和 Session 的操作继续只在 hover / focus 时出现。</li></ul></section>
             </div>
           </section>
 
@@ -357,7 +380,7 @@
 
     <script>
       const stageTitle = document.getElementById('stage-title');
-      const titles = { workbench: '核心工作台', inbox: '会话收件箱', providers: '模型与 Provider', context: '上下文与技能' };
+      const titles = { workbench: '核心工作台', sidebar: '侧栏导航', providers: '模型与 Provider', context: '上下文与技能' };
       const setView = (view) => {
         document.querySelectorAll('[data-view]').forEach((button) => button.classList.toggle('active', button.dataset.view === view));
         document.querySelectorAll('.artboard').forEach((screen) => screen.classList.toggle('active', screen.dataset.screen === view));
