@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { safeStorage } from 'electron'
 
@@ -48,6 +48,17 @@ export class SecretStore {
     }
     this.values[key] = safeStorage.encryptString(value).toString('base64')
     writeFileSync(this.path, JSON.stringify(this.values, null, 2), 'utf8')
+  }
+
+  delete(key: string): void {
+    if (this.development && this.envPath) {
+      delete this.envValues[envKey(key)]
+      writeEnvFile(this.envPath, this.envValues)
+      return
+    }
+    delete this.values[key]
+    if (Object.keys(this.values).length) writeFileSync(this.path, JSON.stringify(this.values, null, 2), 'utf8')
+    else if (existsSync(this.path)) unlinkSync(this.path)
   }
 
   private devValue(key: string): string | undefined {

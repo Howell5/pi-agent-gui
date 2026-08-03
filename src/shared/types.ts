@@ -27,6 +27,7 @@ export interface Project {
   path: string
   displayName: string
   lastOpenedAt: number
+  instructions?: string
 }
 
 export type UiMessageRole = 'user' | 'assistant' | 'tool' | 'system' | 'approval'
@@ -59,6 +60,8 @@ export interface Task {
   status: 'idle' | 'running' | 'waiting_approval' | 'failed'
   messages: UiMessage[]
   sessionPath: string
+  pinned?: boolean
+  archived?: boolean
   createdAt: number
   updatedAt: number
 }
@@ -88,13 +91,21 @@ export interface AppApi {
   sendMessage(input: { taskId: string; text: string }): Promise<void>
   stopTask(taskId: string): Promise<void>
   respondPermission(input: { taskId: string; approvalId: string; approved: boolean }): Promise<void>
+  retryTask(taskId: string): Promise<void>
+  renameTask(input: { taskId: string; title: string }): Promise<Task>
+  setTaskPinned(input: { taskId: string; pinned: boolean }): Promise<Task>
+  archiveTask(input: { taskId: string; archived: boolean }): Promise<Task>
+  deleteTask(taskId: string): Promise<AppSnapshot>
+  updateProjectInstructions(input: { projectId: string; instructions: string }): Promise<AppSnapshot>
   saveBuiltinProviderToken(providerId: 'deepseek' | 'openai', token: string): Promise<AppSnapshot>
   testProvider(providerId: string): Promise<{ ok: boolean; message: string }>
   saveCustomProvider(input: {
+    id?: string
     name: string
     baseUrl: string
     token: string
     models: Array<{ id: string; name?: string }>
   }): Promise<AppSnapshot>
+  deleteProvider(providerId: string): Promise<AppSnapshot>
   onSnapshot(callback: (snapshot: AppSnapshot) => void): () => void
 }

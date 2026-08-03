@@ -267,6 +267,24 @@ function startWorker(task: Task, initialPrompt?: string): void {
   if (initialPrompt) runtime.pendingPrompt = initialPrompt
 }
 
+function sendTaskPrompt(task: Task, text: string): void {
+  if (task.status === 'running' || task.status === 'waiting_approval') throw new Error('Task is already running')
+  if (activeWorkerForProject(task.projectId, task.id)) throw new Error('This project already has a running task')
+  if (task.title === 'New task') task.title = text.slice(0, 48)
+  task.status = 'running'
+  taskMessage(task, { id: `user-${randomUUID()}`, role: 'user', text, createdAt: now() })
+  try {
+    startWorker(task, text)
+  } catch (cause) {
+    task.status = 'failed'
+    sendSystemMessage(task, cause instanceof Error ? cause.message : String(cause))
+    updateTask(task)
+    broadcast()
+    throw cause
+  }
+  broadcast()
+}
+
 async function createWindow(): Promise<void> {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -378,21 +396,7 @@ function registerIpc(): void {
     const task = store.findTask(input.taskId)
     const text = input.text.trim()
     if (!task || !text) throw new Error('Task or message is invalid')
-    if (task.status === 'running' || task.status === 'waiting_approval') throw new Error('Task is already running')
-    if (activeWorkerForProject(task.projectId, task.id)) throw new Error('This project already has a running task')
-    if (task.title === 'New task') task.title = text.slice(0, 48)
-    task.status = 'running'
-    taskMessage(task, { id: `user-${randomUUID()}`, role: 'user', text, createdAt: now() })
-    try {
-      startWorker(task, text)
-    } catch (cause) {
-      task.status = 'failed'
-      sendSystemMessage(task, cause instanceof Error ? cause.message : String(cause))
-      updateTask(task)
-      broadcast()
-      throw cause
-    }
-    broadcast()
+    sendTaskPrompt(task, text)
   })
 
   ipcMain.handle('app:stopTask', async (_event, taskId: string) => {
@@ -404,6 +408,53 @@ function registerIpc(): void {
       updateTask(task)
     }
     broadcast()
+  })
+
+  ipcMain.handle('app:retryTask', (_event, taskId: string) => {
+    const task = store.findTask(taskId)
+    const text = [...(task?.messages ?? [])].reverse().find((message) => message.role === 'user')?.text.trim()
+    if (!task || !text) throw new Error('没有可重试的用户消息')
+    sendTaskPrompt(task, text)
+  })
+
+  ipcMain.handle('app:renameTask', (_event, input: { taskId: string; title: string }) => {
+    const task = store.findTask(input.taskId)
+    const title = input.title.trim().replace(/\s+/g, ' ')
+    if (!task || !title) throw new Error('会话标题不能为空')
+    task.title = title.slice(0, 80)
+    updateTask(task)
+    broadcast()
+    return task
+  })
+
+  ipcMain.handle('app:setTaskPinned', (_event, input: { taskId: string; pinned: boolean }) => {
+    const task = store.findTask(input.taskId)
+    if (!task) throw new Error('Task not found')
+    task.pinned = Boolean(input.pinned)
+    updateTask(task)
+    broadcast()
+    return task
+  })
+
+  ipcMain.handle('app:archiveTask', (_event, input: { taskId: string; archived: boolean }) => {
+    const task = store.findTask(input.taskId)
+    if (!task) throw new Error('Task not found')
+    task.archived = Boolean(input.archived)
+    updateTask(task)
+    broadcast()
+    return task
+  })
+
+  ipcMain.handle('app:deleteTask', (_event, taskId: string) => {
+    if (!store.findTask(taskId)) throw new Error('Task not found')
+    terminateWorker(taskId)
+    store.deleteTask(taskId)
+    return broadcast()
+  })
+
+  ipcMain.handle('app:updateProjectInstructions', (_event, input: { projectId: string; instructions: string }) => {
+    store.updateProjectInstructions(input.projectId, input.instructions)
+    return broadcast()
   })
 
   ipcMain.handle('app:respondPermission', (_event, input: { taskId: string; approvalId: string; approved: boolean }) => {
@@ -445,11 +496,11 @@ function registerIpc(): void {
     }
   })
 
-  ipcMain.handle('app:saveCustomProvider', (_event, input: { name: string; baseUrl: string; token: string; models: Array<{ id: string; name?: string }> }) => {
+  ipcMain.handle('app:saveCustomProvider', (_event, input: { id?: string; name: string; baseUrl: string; token: string; models: Array<{ id: string; name?: string }> }) => {
     if (!input.name.trim() || !input.baseUrl.trim() || !input.token.trim() || input.models.length === 0) {
       throw new Error('Custom Provider requires a name, Base URL, token and model')
     }
-    const id = `custom-${input.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || randomUUID().slice(0, 8)}`
+    const id = input.id ?? `custom-${input.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || randomUUID().slice(0, 8)}`
     const provider: StoredProvider = {
       id,
       name: input.name.trim(),
@@ -460,6 +511,15 @@ function registerIpc(): void {
     }
     store.upsertProvider(provider)
     secrets.set(id, input.token.trim())
+    return broadcast()
+  })
+
+  ipcMain.handle('app:deleteProvider', (_event, providerId: string) => {
+    const provider = store.findProvider(providerId)
+    if (!provider || provider.kind !== 'custom') throw new Error('Only custom providers can be deleted')
+    if (store.tasks.some((task) => task.selectedModel.providerId === providerId)) throw new Error('Cannot delete a provider used by an existing task')
+    store.deleteProvider(providerId)
+    secrets.delete(providerId)
     return broadcast()
   })
 }

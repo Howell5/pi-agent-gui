@@ -881,6 +881,1122 @@ pre {
   font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+/* HTML v0.3 design source mapped into the Electron renderer. */
+:root {
+  --background: #fbfbfa;
+  --foreground: #242522;
+  --card: #ffffff;
+  --card-foreground: #242522;
+  --popover: #ffffff;
+  --popover-foreground: #242522;
+  --primary: #2364d8;
+  --primary-foreground: #ffffff;
+  --secondary: #e9e9e6;
+  --secondary-foreground: #242522;
+  --muted: #f3f3f1;
+  --muted-foreground: #7d807a;
+  --accent: #e4e8ef;
+  --accent-foreground: #242522;
+  --destructive: #b7424d;
+  --border: #e2e3e0;
+  --input: #d4d6d2;
+  --ring: #8eabe8;
+  --radius: 0.5rem;
+}
+
+body {
+  min-width: 920px;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.heymoss-app-shell {
+  display: flex;
+  height: 100vh;
+  min-width: 0;
+  flex-direction: row;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.heymoss-main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  background: var(--background);
+}
+
+.heymoss-sidebar {
+  position: relative;
+  display: flex;
+  width: 258px;
+  min-height: 0;
+  flex: 0 0 258px;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: #f3f3f1;
+}
+
+.heymoss-sidebar-brand {
+  display: flex;
+  height: 44px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px 0 14px;
+}
+
+.heymoss-brand-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--foreground);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 680;
+}
+
+.heymoss-brand-button:hover,
+.heymoss-icon-button:hover,
+.heymoss-new-chat:hover,
+.heymoss-row-action:hover {
+  background: #e9e9e6;
+}
+
+.heymoss-brand-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.heymoss-icon-button {
+  color: var(--muted-foreground);
+}
+
+.heymoss-new-chat {
+  display: flex;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  margin: 0 8px 5px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--foreground);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.heymoss-new-chat kbd {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font: 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.heymoss-sidebar-scroll {
+  min-height: 0;
+  flex: 1;
+}
+
+.heymoss-sidebar-scroll [data-slot="scroll-area-viewport"] {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 4px 7px 16px;
+  scrollbar-gutter: stable;
+}
+
+.heymoss-sidebar-list {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 1px;
+}
+
+.heymoss-sidebar-section {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 7px;
+  padding: 0 7px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.heymoss-sidebar-section .heymoss-row-action {
+  opacity: 0;
+}
+
+.heymoss-sidebar-section:hover .heymoss-row-action,
+.heymoss-sidebar-section:focus-within .heymoss-row-action {
+  opacity: 1;
+}
+
+.heymoss-sidebar-empty {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted-foreground);
+  background: transparent;
+  font-size: 10px;
+  text-align: left;
+}
+
+.heymoss-sidebar-empty:hover {
+  background: #e9e9e6;
+}
+
+.heymoss-project {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 3px;
+}
+
+.heymoss-project-row,
+.heymoss-session-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+}
+
+.heymoss-project-row {
+  min-height: 31px;
+  border-radius: 7px;
+}
+
+.heymoss-project-row.is-active,
+.heymoss-session-row.is-active {
+  background: var(--accent);
+}
+
+.heymoss-project-row:hover,
+.heymoss-session-row:hover {
+  background: #e9e9e6;
+}
+
+.heymoss-project-main {
+  display: flex;
+  min-width: 0;
+  min-height: 31px;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--foreground);
+  background: transparent;
+  text-align: left;
+}
+
+.heymoss-project-main:hover {
+  background: transparent;
+}
+
+.heymoss-disclosure {
+  display: grid;
+  width: 14px;
+  flex: 0 0 14px;
+  place-items: center;
+  color: var(--muted-foreground);
+}
+
+.heymoss-folder-icon {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+}
+
+.heymoss-project-copy,
+.heymoss-session-copy {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heymoss-project-copy {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.heymoss-project-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1px;
+  padding-right: 2px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.heymoss-project-row:hover .heymoss-project-actions,
+.heymoss-project-row:focus-within .heymoss-project-actions {
+  opacity: 1;
+}
+
+.heymoss-row-action {
+  color: var(--muted-foreground);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.heymoss-project-row:hover .heymoss-row-action,
+.heymoss-session-row:hover .heymoss-row-action,
+.heymoss-project-row:focus-within .heymoss-row-action,
+.heymoss-session-row:focus-within .heymoss-row-action {
+  opacity: 1;
+}
+
+.heymoss-session-list {
+  margin: 1px 0 4px 17px;
+  padding: 2px 0 1px 8px;
+  border-left: 1px solid #dcddd9;
+}
+
+.heymoss-session-label {
+  min-height: 22px;
+  padding: 3px 7px;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.heymoss-session-row {
+  min-height: 29px;
+  gap: 2px;
+  border-radius: 6px;
+}
+
+.heymoss-session-main {
+  display: flex;
+  min-width: 0;
+  min-height: 29px;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  padding: 0 5px 0 7px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--foreground);
+  background: transparent;
+  text-align: left;
+}
+
+.heymoss-session-main:hover {
+  background: transparent;
+}
+
+.heymoss-session-copy {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 520;
+}
+
+.heymoss-session-project {
+  max-width: 62px;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heymoss-session-pin {
+  flex: 0 0 auto;
+  margin-left: 7px;
+  color: var(--muted-foreground);
+}
+
+.heymoss-status-spinner,
+.heymoss-status-waiting,
+.heymoss-status-failed {
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.heymoss-status-spinner {
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--muted-foreground);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: heymoss-spin 750ms linear infinite;
+}
+
+.heymoss-status-waiting,
+.heymoss-status-failed {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.heymoss-status-waiting { background: #b66a18; }
+.heymoss-status-failed { background: var(--destructive); }
+
+@keyframes heymoss-spin {
+  to { transform: rotate(360deg); }
+}
+
+.heymoss-sidebar-user {
+  display: flex;
+  height: 45px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-top: 1px solid var(--border);
+}
+
+.heymoss-avatar {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #84906f;
+  font-size: 8px;
+  font-weight: 720;
+}
+
+.heymoss-user-name {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 580;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heymoss-sidebar-reopen {
+  position: fixed;
+  z-index: 5;
+  top: 10px;
+  left: 10px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+
+.heymoss-chat-workspace {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  grid-template-rows: 48px minmax(0, 1fr) auto;
+}
+
+.heymoss-workspace-header {
+  display: flex;
+  min-height: 48px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.heymoss-workspace-heading {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.heymoss-workspace-heading h1 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heymoss-workspace-heading > span {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.heymoss-workspace-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+}
+
+.heymoss-working {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.heymoss-empty-project,
+.heymoss-loading {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  place-items: center;
+  text-align: center;
+}
+
+.heymoss-empty-project h1 {
+  margin: 13px 0 5px;
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.heymoss-empty-project p {
+  margin: 0 0 17px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.heymoss-empty-mark {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin: auto;
+  place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  background: #2e3030;
+  font-weight: 700;
+}
+
+.aui-thread {
+  min-height: 0;
+  height: 100%;
+}
+
+.aui-thread-viewport {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.aui-thread-content {
+  width: min(790px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 32px 0 22px;
+}
+
+.aui-thread-empty {
+  display: grid;
+  min-height: 42vh;
+  place-items: center;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-align: center;
+}
+
+.aui-thread-footer {
+  width: min(790px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 8px 0 20px;
+  background: var(--background);
+}
+
+.aui-message {
+  max-width: none;
+  margin: 0 0 22px;
+}
+
+.aui-message-meta {
+  display: none;
+}
+
+.aui-message-user {
+  padding-left: 18%;
+  text-align: right;
+}
+
+.aui-message-user-bubble {
+  display: inline-block;
+  max-width: 100%;
+  padding: 9px 12px;
+  border-radius: 13px 13px 4px 13px;
+  color: var(--foreground);
+  background: #ececea;
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.aui-message-assistant {
+  color: #30322e;
+  font-size: 13px;
+  line-height: 1.72;
+}
+
+.aui-message-body {
+  min-width: 0;
+}
+
+.aui-message-system {
+  margin: 8px 0;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.aui-chain-of-thought {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 2px 0 18px;
+}
+
+.aui-chain-of-thought > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.aui-chain-of-thought > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] > svg:last-child {
+  opacity: 0;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.aui-chain-of-thought:hover > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] > svg:last-child,
+.aui-chain-of-thought:focus-within > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] > svg:last-child,
+.aui-chain-of-thought [data-slot="collapsible-trigger"][aria-expanded="true"] > svg:last-child {
+  opacity: 1;
+}
+
+.aui-chain-of-thought > [data-slot="collapsible"] {
+  margin: 0;
+}
+
+.aui-chain-of-thought > [data-slot="collapsible"] + [data-slot="collapsible"] {
+  margin: 0;
+}
+
+.aui-tool-group {
+  display: grid;
+  gap: 2px;
+}
+
+.aui-tool {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.aui-tool [data-slot="collapsible-trigger"] {
+  min-height: 24px;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 2px 0;
+  color: var(--muted-foreground);
+}
+
+.aui-tool [data-slot="collapsible-trigger"] > div:first-child {
+  min-width: 0;
+  flex: 1;
+  gap: 6px;
+}
+
+.aui-tool [data-slot="collapsible-trigger"] > div:first-child > svg {
+  width: 14px;
+  height: 14px;
+}
+
+.aui-tool [data-slot="collapsible-trigger"] .font-medium {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aui-tool [data-slot="collapsible-trigger"] > svg,
+.aui-tool [data-slot="collapsible-trigger"] .aui-tool-status svg {
+  width: 13px;
+  height: 13px;
+  color: var(--muted-foreground);
+}
+
+.aui-tool .aui-tool-chevron {
+  opacity: 0;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.aui-tool:hover .aui-tool-chevron,
+.aui-tool:focus-within .aui-tool-chevron,
+.aui-tool [data-slot="collapsible-trigger"][aria-expanded="true"] .aui-tool-chevron {
+  opacity: 1;
+}
+
+.aui-tool-content {
+  margin-left: 21px;
+  padding: 2px 0 6px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.aui-tool-detail {
+  padding: 2px 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.aui-tool-output {
+  max-height: 180px;
+  margin: 2px 0;
+  overflow: auto;
+  padding: 4px 0;
+  border: 0;
+  color: var(--muted-foreground);
+  background: transparent;
+  font: 10px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+}
+
+.aui-tool-approval {
+  display: flex;
+  gap: 7px;
+  padding: 6px 0 2px;
+}
+
+.aui-recovery-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 4px 0 20px;
+  padding: 11px 0 11px 13px;
+  border-left: 2px solid var(--destructive);
+  color: var(--muted-foreground);
+  background: linear-gradient(90deg, #fff0f1, transparent 82%);
+  font-size: 11px;
+}
+
+.aui-recovery-banner strong,
+.aui-recovery-banner span {
+  display: block;
+}
+
+.aui-recovery-banner strong {
+  margin-bottom: 2px;
+  color: var(--foreground);
+  font-size: 12px;
+}
+
+.aui-composer {
+  display: flex;
+  min-height: 116px;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid var(--input);
+  border-radius: 15px;
+  background: var(--card);
+  box-shadow: 0 12px 30px rgb(29 33 28 / 7%);
+}
+
+.aui-composer-input {
+  order: 1;
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  resize: none;
+  padding: 2px 3px 8px;
+  border: 0;
+  outline: 0;
+  color: var(--foreground);
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.aui-composer-toolbar {
+  order: 2;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 2px;
+}
+
+.aui-composer-select,
+.aui-composer-mode {
+  width: auto;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--muted-foreground);
+  background: transparent;
+  font-size: 10px;
+}
+
+.aui-composer-select:hover,
+.aui-composer-mode:hover {
+  background: #e9e9e6;
+}
+
+.aui-composer-select {
+  max-width: 215px;
+}
+
+.aui-composer-select [data-slot="select-value"] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aui-composer-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.aui-composer-toolbar > [data-slot="button"] {
+  color: var(--muted-foreground);
+}
+
+.aui-composer-toolbar > [data-slot="button"]:hover {
+  background: #e9e9e6;
+}
+
+.heymoss-error-alert {
+  display: flex;
+  width: min(790px, calc(100% - 64px));
+  margin: 0 auto 8px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.heymoss-error-alert [data-slot="alert-description"] {
+  flex: 1;
+}
+
+.heymoss-settings-page {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  grid-template-rows: 48px minmax(0, 1fr);
+}
+
+.heymoss-settings-scroll {
+  min-height: 0;
+}
+
+.heymoss-settings-scroll [data-slot="scroll-area-viewport"] {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.heymoss-provider-layout {
+  display: grid;
+  grid-template-columns: 218px minmax(0, 1fr);
+  width: min(940px, calc(100% - 70px));
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 30px 0 48px;
+}
+
+.heymoss-provider-index {
+  padding-right: 24px;
+  border-right: 1px solid var(--border);
+}
+
+.heymoss-provider-index h2 {
+  margin: 0 7px 12px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.heymoss-provider-row {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  background: transparent;
+  text-align: left;
+}
+
+.heymoss-provider-row:hover,
+.heymoss-provider-row.is-active {
+  color: var(--foreground);
+  background: #e9e9e6;
+}
+
+.heymoss-provider-logo {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 7px;
+  color: #fff;
+  background: #333b48;
+  font-size: 9px;
+  font-weight: 720;
+}
+
+.heymoss-provider-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.heymoss-provider-copy strong,
+.heymoss-provider-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heymoss-provider-copy strong { font-size: 11px; font-weight: 610; }
+.heymoss-provider-copy small { margin-top: 1px; color: var(--muted-foreground); font-size: 9px; }
+.heymoss-configured-dot { width: 6px; height: 6px; border-radius: 50%; background: #34785e; }
+
+.heymoss-provider-form {
+  min-width: 0;
+  padding-left: 38px;
+}
+
+.heymoss-eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.heymoss-provider-form h2,
+.heymoss-instructions-content h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -.03em;
+}
+
+.heymoss-settings-lead {
+  margin: 6px 0 27px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.heymoss-form-section {
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+}
+
+.heymoss-form-section:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.heymoss-form-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.heymoss-form-section h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 640;
+}
+
+.heymoss-form-section p {
+  margin: 3px 0 0;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.heymoss-field-label {
+  display: block;
+  margin: 11px 0 5px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 580;
+}
+
+.heymoss-field-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+
+.heymoss-connection-line {
+  margin-top: 10px;
+  color: #34785e;
+  font-size: 10px;
+}
+
+.heymoss-connection-line.is-error {
+  color: var(--destructive);
+}
+
+.heymoss-model-table {
+  border-top: 1px solid var(--border);
+}
+
+.heymoss-model-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px 70px;
+  min-height: 42px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.heymoss-model-row strong,
+.heymoss-model-row small {
+  display: block;
+}
+
+.heymoss-model-row strong { color: var(--foreground); font-size: 11px; font-weight: 590; }
+.heymoss-model-row small { color: var(--muted-foreground); font-size: 9px; }
+.heymoss-available { color: #34785e; }
+.heymoss-empty-state { padding: 14px 0; color: var(--muted-foreground); font-size: 10px; }
+
+.heymoss-instructions-content {
+  width: min(790px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 32px 0 54px;
+}
+
+.heymoss-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 0 24px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.heymoss-instruction-editor {
+  display: block;
+  width: 100%;
+  min-height: 290px;
+  resize: vertical;
+  padding: 14px 15px;
+  border: 1px solid var(--input);
+  border-radius: 9px;
+  color: var(--foreground);
+  background: var(--card);
+  font: 11px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+  outline: 0;
+}
+
+.heymoss-instruction-editor:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px rgb(35 100 216 / 12%);
+}
+
+.heymoss-instruction-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.heymoss-context-files {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.heymoss-context-files h3 {
+  margin: 0 0 5px;
+  font-size: 12px;
+  font-weight: 640;
+}
+
+.heymoss-context-files > p {
+  margin: 0 0 13px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.heymoss-context-file {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  min-height: 42px;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.heymoss-context-file strong,
+.heymoss-context-file small {
+  display: block;
+}
+
+.heymoss-context-file strong { color: var(--foreground); font-size: 11px; font-weight: 590; }
+.heymoss-context-file small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.heymoss-inline-action { border: 0; color: var(--muted-foreground); background: transparent; font-size: 10px; }
+.heymoss-inline-action:hover { color: var(--foreground); }
+
+@media (max-width: 1080px) {
+  .heymoss-sidebar { width: 236px; flex-basis: 236px; }
+  .heymoss-provider-layout { width: min(900px, calc(100% - 42px)); }
+}
+
 @media (prefers-color-scheme: dark) {
   .aui-composer {
     box-shadow: 0 9px 28px rgb(0 0 0 / 18%);

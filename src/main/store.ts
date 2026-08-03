@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { AppSnapshot, Project, ProviderKind, Task } from '../shared/types'
 
@@ -71,14 +71,18 @@ export class AppStore {
       if (!existsSync(taskPath)) continue
       const task = readJson<Task | null>(taskPath, null)
       if (task?.id) {
+        task.pinned = Boolean(task.pinned)
+        task.archived = Boolean(task.archived)
         if (task.status === 'running' || task.status === 'waiting_approval') {
           task.status = 'failed'
           task.messages.push({
             id: randomUUID(),
             role: 'system',
-            text: '上次运行在应用关闭前没有完成。',
+            text: '上次运行在应用重启时中断，可以重试。',
             createdAt: Date.now(),
           })
+          task.updatedAt = Date.now()
+          atomicWrite(taskPath, task)
         }
         this.taskMap.set(task.id, task)
       }
@@ -98,6 +102,12 @@ export class AppStore {
     mkdirSync(taskDir, { recursive: true })
     atomicWrite(join(taskDir, 'task.json'), task)
     this.taskMap.set(task.id, task)
+  }
+
+  deleteTask(id: string): void {
+    const taskDir = join(this.tasksPath, id)
+    if (existsSync(taskDir)) rmSync(taskDir, { recursive: true, force: true })
+    this.taskMap.delete(id)
   }
 
   get projects(): Project[] {
@@ -129,6 +139,14 @@ export class AppStore {
     this.save()
   }
 
+  updateProjectInstructions(id: string, instructions: string): Project {
+    const project = this.findProject(id)
+    if (!project) throw new Error('Project not found')
+    project.instructions = instructions
+    this.save()
+    return project
+  }
+
   findProject(id: string): Project | undefined {
     return this.state.projects.find((project) => project.id === id)
   }
@@ -141,6 +159,11 @@ export class AppStore {
     const index = this.state.providers.findIndex((item) => item.id === provider.id)
     if (index === -1) this.state.providers.push(provider)
     else this.state.providers[index] = provider
+    this.save()
+  }
+
+  deleteProvider(id: string): void {
+    this.state.providers = this.state.providers.filter((provider) => provider.id !== id)
     this.save()
   }
 

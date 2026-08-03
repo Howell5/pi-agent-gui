@@ -13,8 +13,8 @@ import {
   type ThreadMessageLike,
 } from "@assistant-ui/react"
 import type { ToolUIPart } from "ai"
-import { Check, FileUp, LoaderCircle, Send, Square, X } from "lucide-react"
-import { useMemo } from "react"
+import { Check, FileUp, LoaderCircle, RefreshCw, Send, Square, X } from "lucide-react"
+import { useEffect, useMemo, useRef } from "react"
 import { ChainOfThought, ChainOfThoughtContent, ChainOfThoughtHeader, ChainOfThoughtStep } from "@/components/ai-elements/chain-of-thought"
 import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool"
 import { Button } from "@/components/ui/button"
@@ -35,7 +35,10 @@ type AssistantThreadProps = {
   onNew: (text: string) => Promise<void>
   onCancel: () => Promise<void>
   onPermission: (approvalId: string, approved: boolean) => Promise<void>
+  onRetry: () => Promise<void>
   onAttachFile: () => Promise<string | null>
+  draftText: string
+  onDraftChange: (text: string) => void
 }
 
 type ActivitySummary = {
@@ -251,11 +254,21 @@ function AssistantMessage() {
   )
 }
 
-function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, onModelChange, onPermissionModeChange, onAttachFile }: Omit<AssistantThreadProps, "task" | "onNew" | "onCancel" | "onPermission">) {
+function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, draftText, onDraftChange, onModelChange, onPermissionModeChange, onAttachFile }: Omit<AssistantThreadProps, "task" | "onNew" | "onCancel" | "onPermission" | "onRetry">) {
   const aui = useAui()
   const running = useAuiState((state) => state.thread.isRunning)
   const canSend = useAuiState((state) => state.composer.canSend)
+  const composerText = useAuiState((state) => state.composer.text)
+  const restored = useRef(false)
   const selectedModel = modelOptions.find((model) => model.key === modelKey)
+  useEffect(() => {
+    if (restored.current) return
+    aui.composer.setText(draftText)
+    restored.current = true
+  }, [aui, draftText])
+  useEffect(() => {
+    onDraftChange(composerText)
+  }, [composerText, onDraftChange])
   async function attachFile() {
     const path = await onAttachFile()
     if (!path) return
@@ -282,7 +295,7 @@ function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEdi
   )
 }
 
-export function AssistantThread({ task, modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, onModelChange, onPermissionModeChange, onNew, onCancel, onPermission, onAttachFile }: AssistantThreadProps) {
+export function AssistantThread({ task, modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, draftText, onDraftChange, onModelChange, onPermissionModeChange, onNew, onCancel, onPermission, onRetry, onAttachFile }: AssistantThreadProps) {
   const externalMessages = useMemo(() => buildThreadMessages(task?.messages ?? [], task), [task])
   const runtime = useExternalStoreRuntime<ThreadMessageLike>({
     messages: externalMessages,
@@ -291,7 +304,10 @@ export function AssistantThread({ task, modelOptions, modelKey, permissionMode, 
     convertMessage: (message) => fromThreadMessageLike(message, message.id ?? "message", { type: "complete", reason: "stop" }),
     onNew: async (message: AppendMessage) => {
       const text = message.content.filter((part): part is { type: "text"; text: string } => part.type === "text").map((part) => part.text).join("").trim()
-      if (text) await onNew(text)
+      if (text) {
+        onDraftChange("")
+        await onNew(text)
+      }
     },
     onCancel,
     onRespondToToolApproval: async ({ approvalId, approved }) => onPermission(approvalId, approved),
@@ -302,11 +318,12 @@ export function AssistantThread({ task, modelOptions, modelKey, permissionMode, 
         <ThreadPrimitive.Viewport className="aui-thread-viewport">
           <div className="aui-thread-content">
             <ThreadPrimitive.Empty><div className="aui-thread-empty">描述你希望 Agent 在这个项目里完成什么。</div></ThreadPrimitive.Empty>
+            {task?.status === "failed" && <div className="aui-recovery-banner"><div><strong>这次运行没有完成</strong><span>会话和已经保存的工具结果仍然保留，可以从最后一条用户消息重试。</span></div><Button size="sm" onClick={() => void onRetry()}><RefreshCw className="size-3.5" />Retry</Button></div>}
             <ThreadPrimitive.Messages>{() => <AssistantMessage />}</ThreadPrimitive.Messages>
           </div>
         </ThreadPrimitive.Viewport>
         <div className="aui-thread-footer">
-          <AssistantComposer modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} onModelChange={onModelChange} onPermissionModeChange={onPermissionModeChange} onAttachFile={onAttachFile} />
+          <AssistantComposer modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} draftText={draftText} onDraftChange={onDraftChange} onModelChange={onModelChange} onPermissionModeChange={onPermissionModeChange} onAttachFile={onAttachFile} />
         </div>
       </ThreadPrimitive.Root>
     </AssistantRuntimeProvider>

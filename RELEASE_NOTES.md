@@ -1,12 +1,14 @@
-# Heymoss v0.2.3
+# Heymoss v0.3.0
 
 Pi-first, local-first macOS Agent GUI for Apple Silicon.
+
+This release makes the HTML design source the actual Electron UI. It adds a compact Codex-style sidebar with Projects, Pinned, and Recents; persistent session rename/pin/archive/delete actions; draft restoration; retry after interrupted runs; full-page Provider settings; and persisted Project Instructions. Tool activity stays collapsed by default, groups adjacent operations, and keeps the composer fixed while the conversation scrolls independently.
 
 This release adds a Codex-style expandable Project → Session sidebar, editable per-Session model and Ask/Auto settings while idle, proper assistant Markdown/GFM rendering, Shiki code blocks with copy, compact tool summaries, and collapsible tool output. Session settings are persisted and restored; new sessions inherit the current selection. Local development token saves use the ignored `.env.local` file; release builds continue to use macOS secure storage.
 
 ## Install
 
-1. Download `Heymoss-0.2.3-arm64.dmg` and its `.sha256` file.
+1. Download `Heymoss-0.3.0-arm64.dmg` and its `.sha256` file.
 2. Verify the SHA256, open the DMG, and drag `Heymoss.app` to Applications.
 3. The build is unsigned. Control-click the app and choose **Open** on first launch.
 4. Open a local folder, configure DeepSeek or OpenAI, choose a model, and start a Task.

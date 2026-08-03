@@ -1,6 +1,6 @@
 # Pi-first Agent GUI — v0.1 Specification
 
-状态：产品方向已收敛，技术实现尚未开始
+状态：v0.3.0 已实现并完成 macOS arm64 DMG 构建；后续改动继续以 HTML 设计稿为准
 
 目标平台：macOS Apple Silicon
 
@@ -348,3 +348,12 @@ Git 不是 Project 的前置条件，也不是任务列表的字段。
   - 参考 Provider Catalog、模型目录和“Provider 提供多个模型”的数据表达。
   - 不复制其 SQLite、Codex/Claude 双运行时、远程设备和复杂路由系统。
 
+## 16. v0.3.0 已交付范围
+
+- HTML 设计稿成为 Renderer 的视觉源，主窗口采用固定侧栏和独立聊天滚动区。
+- Sidebar 分为 New Chat、Projects、Pinned、Recents；Pinned/Recents 指向现有会话，不复制数据。
+- 会话支持重命名、固定/取消固定、归档/恢复、删除，草稿按项目或会话保留在本地。
+- 运行中、等待授权、失败/中断和 Retry 状态在对话流中可恢复表达。
+- Provider 设置改为工作区页面，支持内置 Provider、自定义 OpenAI-compatible Provider、连接测试和删除自定义 Provider。
+- Project Instructions 持久化于应用数据，不污染项目目录；临时 `@file` 仍由会话输入框负责。
+- 已生成 `Heymoss-0.3.0-arm64.dmg` 及 SHA256；DMG 内 Pi Worker 已通过启动烟测。
