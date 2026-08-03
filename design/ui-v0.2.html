@@ -287,11 +287,13 @@
       .activity[open] summary::before { transform: rotate(90deg); }
       .activity-time { font-size: 12px; font-weight: 560; }
       .activity-labels { overflow: hidden; color: var(--ink-faint); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-      .activity-body { display: grid; gap: 5px; padding: 0 0 10px 22px; }
-      .tool-row { display: flex; min-height: 30px; align-items: center; gap: 8px; padding: 0 9px; border-radius: 7px; color: var(--ink-soft); background: var(--surface-muted); font-size: 11px; }
-      .tool-icon { width: 17px; color: var(--ink-faint); text-align: center; }
+      .activity-body { display: grid; gap: 2px; padding: 0 0 9px 22px; }
+      .tool-row { display: flex; min-height: 23px; align-items: center; gap: 7px; padding: 2px 0; color: var(--ink-faint); font-size: 11px; }
+      .tool-icon { width: 15px; color: #9aa7ba; text-align: center; }
       .tool-row strong { color: var(--ink-soft); font-weight: 600; }
-      .tool-row small { overflow: hidden; color: var(--ink-faint); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
+      .tool-row small { min-width: 0; overflow: hidden; color: var(--ink-faint); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
+      .tool-count { display: inline-flex; min-width: 17px; height: 17px; align-items: center; justify-content: center; padding: 0 5px; border-radius: 999px; color: var(--ink-faint); background: var(--surface-muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+      .tool-empty { color: #aab4c2; font-style: italic; }
 
       .composer-dock { flex: 0 0 auto; padding: 10px 28px 22px; border-top: 1px solid var(--line); background: var(--surface); }
       .composer {
@@ -435,9 +437,9 @@
               <details class="activity">
                 <summary><span class="activity-time">Worked for 1m 14s</span><span class="activity-labels">Edited files · Read files · Ran commands</span></summary>
                 <div class="activity-body">
-                  <div class="tool-row"><span class="tool-icon">⌘</span><strong>ls</strong><small>列出项目文件</small></div>
-                  <div class="tool-row"><span class="tool-icon">⌕</span><strong>read</strong><small>读取 package.json</small></div>
-                  <div class="tool-row"><span class="tool-icon">✎</span><strong>edit</strong><small>更新 src/renderer/App.tsx</small></div>
+                  <div class="tool-row"><span class="tool-icon">⌘</span><strong>ls</strong><span class="tool-count">6</span><small>src/, tests/, scripts/, package.json, README.md, SPEC.md</small></div>
+                  <div class="tool-row"><span class="tool-icon">⌕</span><strong>read</strong><span class="tool-count">4</span><small>src/main/index.ts, src/shared/types.ts, package.json, README.md</small></div>
+                  <div class="tool-row"><span class="tool-icon">✎</span><strong>edit</strong><small>src/renderer/App.tsx</small></div>
                 </div>
               </details>
               <article class="message"><div class="message-meta">Heymoss</div><div class="assistant-copy"><p>我发现几个值得优先处理的点：</p><p><strong>后端无输入校验：</strong> <code class="inline-code">PUT /api/dishes</code> 可以写入任意 JSON；<code class="inline-code">POST /api/menu-history</code> 传空 <code class="inline-code">menu</code> 会算出 NaN 辣度。</p><p><strong>交互不一致：</strong>设置、授权和会话操作应该使用同一套轻量控件，并且保持状态可见。</p></div></article>
