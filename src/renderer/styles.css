@@ -112,6 +112,351 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.heymoss-app-shell {
+  display: flex;
+  height: 100vh;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.heymoss-app-header {
+  display: flex;
+  height: 48px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.heymoss-brand,
+.heymoss-header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.heymoss-brand {
+  gap: 9px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.heymoss-brand-mark {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 3px 8px rgb(42 91 215 / 20%);
+}
+
+.heymoss-header-actions {
+  gap: 2px;
+}
+
+.heymoss-header-button {
+  color: var(--muted-foreground);
+}
+
+.heymoss-sidebar {
+  display: flex;
+  width: 252px;
+  min-height: 0;
+  flex: 0 0 252px;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--muted) 72%, var(--background));
+}
+
+.heymoss-sidebar-head {
+  display: flex;
+  height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 15px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.heymoss-sidebar-add {
+  color: var(--muted-foreground);
+}
+
+.heymoss-sidebar-scroll {
+  min-height: 0;
+  flex: 1;
+}
+
+.heymoss-sidebar-scroll [data-slot="scroll-area-viewport"] {
+  padding: 5px 8px 18px;
+  overflow-x: hidden;
+}
+
+.heymoss-sidebar-list {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 2px;
+}
+
+.heymoss-sidebar-empty,
+.heymoss-session-empty {
+  padding: 10px 8px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  text-align: center;
+}
+
+.heymoss-sidebar-empty {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+.heymoss-project {
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 4px;
+}
+
+.heymoss-project-row,
+.heymoss-session-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+}
+
+.heymoss-project-main,
+.heymoss-session-main {
+  min-width: 0;
+  justify-content: flex-start;
+  text-align: left;
+  background: transparent;
+}
+
+.heymoss-project-main {
+  height: 34px;
+  flex: 1;
+  gap: 7px;
+  padding: 0 7px;
+  border-radius: 8px;
+}
+
+.heymoss-project-row.is-active .heymoss-project-main,
+.heymoss-session-row.is-active .heymoss-session-main {
+  background: var(--accent);
+}
+
+.heymoss-project-main:hover,
+.heymoss-session-main:hover,
+.heymoss-row-action:hover,
+.heymoss-session-menu:hover {
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.heymoss-disclosure {
+  display: grid;
+  width: 14px;
+  flex: 0 0 14px;
+  place-items: center;
+  color: var(--muted-foreground);
+}
+
+.heymoss-folder-icon {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+}
+
+.heymoss-project-copy,
+.heymoss-session-copy {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heymoss-project-copy {
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.heymoss-project-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1px;
+  margin-left: 2px;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.heymoss-project-row:hover .heymoss-project-actions,
+.heymoss-project-row:focus-within .heymoss-project-actions,
+.heymoss-project-row:has([data-slot="dropdown-menu-trigger"][data-state="open"]) .heymoss-project-actions {
+  opacity: 1;
+}
+
+.heymoss-row-action,
+.heymoss-session-menu {
+  color: var(--muted-foreground);
+}
+
+.heymoss-session-list {
+  margin: 1px 0 5px 21px;
+  padding: 2px 0 1px 10px;
+  border-left: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.heymoss-session-label {
+  min-height: 23px;
+  padding: 3px 8px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heymoss-session-main {
+  height: 30px;
+  flex: 1;
+  gap: 7px;
+  padding: 0 7px;
+  border-radius: 7px;
+}
+
+.heymoss-session-copy {
+  flex: 1;
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.heymoss-session-status {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border: 1.5px solid var(--muted-foreground);
+  border-radius: 50%;
+}
+
+.heymoss-session-status.is-idle {
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 13%, transparent);
+}
+
+.heymoss-session-status.is-running {
+  border-color: var(--primary);
+  border-top-color: transparent;
+  animation: heymoss-spin 800ms linear infinite;
+}
+
+.heymoss-session-status.is-waiting {
+  border-color: #d97706;
+  background: #f59e0b;
+}
+
+.heymoss-session-status.is-failed {
+  border-color: var(--destructive);
+  background: var(--destructive);
+}
+
+@keyframes heymoss-spin {
+  to { transform: rotate(360deg); }
+}
+
+.heymoss-session-menu {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  margin-left: 1px;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.heymoss-session-row:hover .heymoss-session-menu,
+.heymoss-session-row:focus-within .heymoss-session-menu,
+.heymoss-session-row:has([data-slot="dropdown-menu-trigger"][data-state="open"]) .heymoss-session-menu {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.heymoss-workspace-header {
+  display: flex;
+  min-height: 58px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.heymoss-workspace-context {
+  min-width: 0;
+}
+
+.heymoss-workspace-project {
+  margin-bottom: 2px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heymoss-workspace-context h1 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 16px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heymoss-workspace-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.heymoss-workspace-status {
+  min-height: 25px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: var(--card);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.heymoss-new-session {
+  height: 32px;
+  padding-inline: 10px;
+}
+
 /* Each pane owns its vertical scroll. The window itself never participates. */
 [data-slot="scroll-area"] {
   min-height: 0;

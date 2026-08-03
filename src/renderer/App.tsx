@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react"
-import { ChevronDown, ChevronRight, Folder, FolderOpen, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, Plug } from "lucide-react"
+import { ChevronDown, ChevronRight, Folder, FolderOpen, MessageSquarePlus, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Plug, Plus } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import type { AppSnapshot, PermissionMode, ProviderView, Task } from "@shared/types"
 import { AssistantThread } from "./components/assistant/assistant-thread"
@@ -237,6 +237,33 @@ export function App() {
     setModelKey(activeTask ? taskModelKey(activeTask) : modelKey || firstModel(snapshot))
   }
 
+  async function newTaskForProject(projectId: string): Promise<void> {
+    if (projectId === activeProject?.id) {
+      newTask()
+      return
+    }
+    setError("")
+    try {
+      const value = await window.appApi.selectProject(projectId)
+      setSnapshot(value)
+      setActiveTaskId(null)
+      setDraft(true)
+      setModelKey(firstModel(value))
+      setPermissionMode("ask")
+      setExpandedProjects((current) => new Set(current).add(projectId))
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    }
+  }
+
+  async function copyText(value: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "复制失败")
+    }
+  }
+
   async function saveTaskSettings(input: { modelKey?: string; permissionMode?: PermissionMode }, previous: { modelKey: string; permissionMode: PermissionMode }): Promise<void> {
     if (!activeTaskId || draft) return
     setSettingsSaving(true)
@@ -296,28 +323,36 @@ export function App() {
   if (!snapshot) return <div className="grid min-h-screen place-items-center bg-background text-muted-foreground">Loading…</div>
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card/80 px-4 backdrop-blur">
-        <div className="flex items-center gap-3"><div className="grid size-8 place-items-center rounded-lg bg-primary font-semibold text-primary-foreground shadow-sm">H</div><span className="font-semibold tracking-tight">Heymoss</span></div>
-        <div className="flex items-center gap-1">
-          <Dialog open={providerOpen} onOpenChange={setProviderOpen}><DialogTrigger asChild><Button variant="ghost" size="icon" title="模型服务商"><Plug className="size-4" /></Button></DialogTrigger><ProviderSettings snapshot={snapshot} /></Dialog>
-          <Button variant="ghost" size="icon" title="打开项目" onClick={() => void openProject()}><FolderOpen className="size-4" /></Button>
-          <Button variant="ghost" size="icon" title="切换侧栏" onClick={() => setSidebarOpen((value) => !value)}>{sidebarOpen ? <PanelLeftClose className="size-4" /> : <PanelLeftOpen className="size-4" />}</Button>
+    <div className="heymoss-app-shell">
+      <header className="heymoss-app-header">
+        <div className="heymoss-brand"><div className="heymoss-brand-mark">H</div><span>Heymoss</span></div>
+        <div className="heymoss-header-actions">
+          <Dialog open={providerOpen} onOpenChange={setProviderOpen}><DialogTrigger asChild><Button variant="ghost" size="icon-sm" className="heymoss-header-button" title="模型服务商"><Plug className="size-4" /></Button></DialogTrigger><ProviderSettings snapshot={snapshot} /></Dialog>
+          <Button variant="ghost" size="icon-sm" className="heymoss-header-button" title="打开项目" onClick={() => void openProject()}><FolderOpen className="size-4" /></Button>
+          <Button variant="ghost" size="icon-sm" className="heymoss-header-button" title="切换侧栏" onClick={() => setSidebarOpen((value) => !value)}>{sidebarOpen ? <PanelLeftClose className="size-4" /> : <PanelLeftOpen className="size-4" />}</Button>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1">
-        {sidebarOpen && <aside className="flex w-72 shrink-0 flex-col border-r bg-muted/25">
-          <div className="flex h-12 shrink-0 items-center justify-between px-4"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">项目</span><Button variant="ghost" size="icon-sm" onClick={() => void openProject()} title="打开项目"><FolderOpen className="size-4" /></Button></div>
-          <Separator />
-          <ScrollArea className="min-h-0 flex-1"><div className="space-y-1 p-2">
-            {!snapshot.projects.length && <div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">打开一个本地文件夹开始。</div>}
+        {sidebarOpen && <aside className="heymoss-sidebar">
+          <div className="heymoss-sidebar-head"><span>项目</span><Button variant="ghost" size="icon-sm" className="heymoss-sidebar-add" onClick={() => void openProject()} title="打开项目"><Plus className="size-4" /></Button></div>
+          <ScrollArea className="heymoss-sidebar-scroll"><div className="heymoss-sidebar-list">
+            {!snapshot.projects.length && <div className="heymoss-sidebar-empty">打开一个本地文件夹开始。</div>}
             {snapshot.projects.map((project) => {
               const expanded = expandedProjects.has(project.id)
               const projectTasks = snapshot.tasks.filter((task) => task.projectId === project.id)
-              return <Collapsible key={project.id} open={expanded} onOpenChange={(open) => { if (project.id === activeProject?.id) setExpandedProjects((current) => { const next = new Set(current); if (open) next.add(project.id); else next.delete(project.id); return next }) }}>
-                <CollapsibleTrigger asChild><Button variant="ghost" className={cn("h-auto w-full justify-start gap-2 px-2.5 py-2.5 text-left", project.id === activeProject?.id && "bg-accent") } onClick={() => toggleProject(project.id)}><span className="text-muted-foreground">{expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}</span>{expanded ? <FolderOpen className="size-4 text-muted-foreground" /> : <Folder className="size-4 text-muted-foreground" />}<span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{project.displayName}</span><span className="block truncate text-[11px] text-muted-foreground">{project.path}</span></span></Button></CollapsibleTrigger>
-                <CollapsibleContent><div className="ml-5 border-l pl-3"><div className="flex items-center justify-between px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"><span>会话</span><Button variant="ghost" size="icon-xs" onClick={newTask} title="新会话"><MessageSquarePlus className="size-3.5" /></Button></div>{projectTasks.length ? projectTasks.map((task) => <Button key={task.id} variant="ghost" className={cn("h-auto w-full justify-start gap-2 px-2 py-2 text-left", task.id === activeTaskId && "bg-accent")} onClick={() => selectTask(task)}><span className={cn("size-2 shrink-0 rounded-full bg-muted-foreground/50", task.status === "running" && "bg-primary", task.status === "waiting_approval" && "bg-amber-500", task.status === "failed" && "bg-destructive")} /><span className="min-w-0 flex-1"><span className="block truncate text-xs font-medium">{task.title}</span><span className="block text-[11px] text-muted-foreground">{formatStatus(task)}</span></span></Button>) : <div className="px-2 py-2 text-xs text-muted-foreground">还没有会话</div>}</div></CollapsibleContent>
+              return <Collapsible key={project.id} className="heymoss-project" open={expanded} onOpenChange={(open) => { if (project.id === activeProject?.id) setExpandedProjects((current) => { const next = new Set(current); if (open) next.add(project.id); else next.delete(project.id); return next }) }}>
+                <div className={cn("heymoss-project-row", project.id === activeProject?.id && "is-active")}>
+                  <CollapsibleTrigger asChild><Button variant="ghost" className="heymoss-project-main" onClick={() => toggleProject(project.id)}><span className="heymoss-disclosure">{expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}</span>{expanded ? <FolderOpen className="heymoss-folder-icon size-4" /> : <Folder className="heymoss-folder-icon size-4" />}<span className="heymoss-project-copy"><span>{project.displayName}</span></span></Button></CollapsibleTrigger>
+                  <div className="heymoss-project-actions">
+                    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon-xs" className="heymoss-row-action" title="项目菜单"><MoreHorizontal className="size-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => void newTaskForProject(project.id)}><MessageSquarePlus className="size-4" />新会话</DropdownMenuItem><DropdownMenuItem onSelect={() => void copyText(project.path)}><Folder className="size-4" />复制项目路径</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+                    <Button variant="ghost" size="icon-xs" className="heymoss-row-action" onClick={() => void newTaskForProject(project.id)} title="新会话"><Plus className="size-3.5" /></Button>
+                  </div>
+                </div>
+                <CollapsibleContent><div className="heymoss-session-list"><div className="heymoss-session-label"><span>会话</span></div>{projectTasks.length ? projectTasks.map((task) => <div className={cn("heymoss-session-row", task.id === activeTaskId && "is-active")} key={task.id}>
+                  <Button variant="ghost" className="heymoss-session-main" onClick={() => selectTask(task)}><span className="heymoss-session-copy">{task.title}</span><span className={cn("heymoss-session-status", task.status === "running" && "is-running", task.status === "waiting_approval" && "is-waiting", task.status === "failed" && "is-failed", task.status === "idle" && "is-idle")} title={formatStatus(task)} /></Button>
+                  <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon-xs" className="heymoss-session-menu" title="会话菜单"><MoreHorizontal className="size-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => selectTask(task)}>打开会话</DropdownMenuItem><DropdownMenuItem onSelect={() => void copyText(task.title)}>复制会话标题</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+                </div>) : <div className="heymoss-session-empty">还没有会话</div>}</div></CollapsibleContent>
               </Collapsible>
             })}
           </div></ScrollArea>
@@ -325,7 +360,7 @@ export function App() {
 
         <main className="flex min-w-0 min-h-0 flex-1 flex-col bg-background">
           {!activeProject ? <div className="grid min-h-0 flex-1 place-items-center p-8"><Card className="w-full max-w-md text-center"><CardHeader><div className="mx-auto grid size-14 place-items-center rounded-2xl bg-primary text-2xl font-semibold text-primary-foreground">H</div><CardTitle className="pt-2">从一个项目开始</CardTitle><CardDescription>选择任意本地文件夹，让 Pi Agent 在其中工作。</CardDescription></CardHeader><CardContent><Button onClick={() => void openProject()}><FolderOpen className="size-4" />打开文件夹</Button></CardContent></Card></div> : <>
-            <div className="flex shrink-0 items-center justify-between border-b px-6 py-5"><div className="min-w-0"><div className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{activeProject.displayName}</div><h1 className="truncate text-xl font-semibold tracking-tight">{activeTask?.title ?? "新会话"}</h1></div><div className="flex items-center gap-2"><Badge variant={activeTask ? statusVariant(activeTask.status) : "secondary"}>{activeTask ? formatStatus(activeTask) : "新会话"}</Badge><Button variant="outline" size="sm" onClick={newTask}><MessageSquarePlus className="size-3.5" />新会话</Button></div></div>
+            <div className="heymoss-workspace-header"><div className="heymoss-workspace-context"><div className="heymoss-workspace-project">{activeProject.displayName}</div><h1>{activeTask?.title ?? "新会话"}</h1></div><div className="heymoss-workspace-actions"><Badge className="heymoss-workspace-status" variant={activeTask ? statusVariant(activeTask.status) : "secondary"}>{activeTask ? formatStatus(activeTask) : "新会话"}</Badge><Button variant="outline" size="sm" className="heymoss-new-session" onClick={newTask}><MessageSquarePlus className="size-3.5" />新会话</Button></div></div>
             <div className="min-h-0 flex-1"><AssistantThread task={activeTask} modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} onModelChange={changeModel} onPermissionModeChange={changePermissionMode} onNew={startMessage} onCancel={() => activeTaskId ? window.appApi.stopTask(activeTaskId) : Promise.resolve()} onPermission={respondPermission} onAttachFile={attachFile} /></div>
             {error && <Alert variant="destructive" className="mx-auto mb-3 w-[min(780px,calc(100%-2rem))]"><AlertTitle>需要注意</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
           </>}
