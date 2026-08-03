@@ -112,10 +112,16 @@
       /* Shared application frame */
       .app-shell { display: grid; grid-template-columns: 258px minmax(0, 1fr); width: 100%; height: 100%; }
       .app-sidebar { position: relative; display: flex; min-height: 0; flex-direction: column; border-right: 1px solid var(--line); background: var(--sidebar); }
-      .sidebar-brand { display: flex; height: 44px; flex: 0 0 auto; align-items: center; justify-content: space-between; padding: 0 10px 0 14px; }
-      .sidebar-brand-button { display: flex; min-width: 0; align-items: center; gap: 7px; padding: 4px 5px; border-radius: 6px; color: var(--ink); background: transparent; font-size: 13px; font-weight: 680; }
-      .sidebar-brand-button:hover { background: var(--hover); }
+      .sidebar-brand { position: relative; display: flex; height: 48px; flex: 0 0 auto; align-items: center; justify-content: space-between; padding: 0 10px 0 14px; -webkit-app-region: drag; }
+      .traffic-lights { position: absolute; top: 18px; left: 14px; display: flex; gap: 6px; }
+      .traffic-light { width: 10px; height: 10px; border-radius: 50%; }
+      .traffic-light.close { background: #ff5f57; }
+      .traffic-light.minimize { background: #febc2e; }
+      .traffic-light.zoom { background: #28c840; }
+      .windowbar-spacer { min-width: 0; flex: 1; }
+      .windowbar-controls { display: flex; align-items: center; margin-left: 72px; -webkit-app-region: no-drag; }
       .sidebar-brand-actions, .row-actions { display: flex; align-items: center; gap: 1px; }
+      .sidebar-brand-actions { -webkit-app-region: no-drag; }
       .icon-button { display: inline-grid; width: 28px; height: 28px; place-items: center; border-radius: 7px; color: var(--ink-soft); background: transparent; }
       .icon-button:hover { color: var(--ink); background: var(--hover); }
       .new-chat {
@@ -161,7 +167,8 @@
       .user-name { min-width: 0; flex: 1; overflow: hidden; font-size: 11px; font-weight: 580; text-overflow: ellipsis; white-space: nowrap; }
 
       .workspace { display: grid; min-width: 0; min-height: 0; grid-template-rows: 48px minmax(0, 1fr) auto; background: var(--paper); }
-      .workspace-head { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 14px; padding: 0 18px; border-bottom: 1px solid var(--line); }
+      .workspace-head { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 14px; padding: 0 18px; border-bottom: 1px solid var(--line); -webkit-app-region: drag; }
+      .workspace-head button { -webkit-app-region: no-drag; }
       .workspace-heading { display: flex; min-width: 0; align-items: baseline; gap: 8px; }
       .workspace-heading h1 { min-width: 0; margin: 0; overflow: hidden; font-size: 13px; font-weight: 650; letter-spacing: -.01em; text-overflow: ellipsis; white-space: nowrap; }
       .workspace-project { flex: 0 0 auto; color: var(--ink-faint); font-size: 10px; }
@@ -353,6 +360,7 @@
     <svg aria-hidden="true" width="0" height="0" style="position:absolute">
       <defs>
         <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m7 9.5 5 5 5-5"/></symbol>
+        <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></symbol>
         <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9.5 7 5 5-5 5"/></symbol>
         <symbol id="i-compose" viewBox="0 0 24 24"><path d="M13.5 5.5 18.5 10.5M4 20l3.8-.8L19.4 7.6a2 2 0 0 0-2.8-2.8L5 16.4 4 20Z"/></symbol>
         <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></symbol>
@@ -378,7 +386,9 @@
     <template id="sidebar-template">
       <aside class="app-sidebar">
         <header class="sidebar-brand">
-          <button class="sidebar-brand-button" type="button">Heymoss <svg class="icon small"><use href="#i-chevron-down"/></svg></button>
+          <span class="traffic-lights" aria-hidden="true"><span class="traffic-light close"></span><span class="traffic-light minimize"></span><span class="traffic-light zoom"></span></span>
+          <div class="windowbar-controls"><button class="icon-button" type="button" title="收起侧栏"><svg class="icon"><use href="#i-chevron-left"/></svg></button></div>
+          <span class="windowbar-spacer" aria-hidden="true"></span>
           <div class="sidebar-brand-actions">
             <button class="icon-button" type="button" title="搜索"><svg class="icon"><use href="#i-search"/></svg></button>
           </div>

@@ -918,7 +918,7 @@ body {
 }
 
 .heymoss-main.is-sidebar-collapsed .heymoss-workspace-header {
-  padding-left: 58px;
+  padding-left: 126px;
 }
 
 .heymoss-sidebar {
@@ -934,27 +934,26 @@ body {
 
 .heymoss-sidebar-brand {
   display: flex;
-  height: 44px;
+  height: 48px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
   padding: 0 10px 0 14px;
+  -webkit-app-region: drag;
 }
 
-.heymoss-brand-button {
-  display: inline-flex;
+.heymoss-windowbar-spacer {
+  min-width: 0;
+  flex: 1;
+}
+
+.heymoss-windowbar-controls {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px;
-  border: 0;
-  border-radius: 6px;
-  color: var(--foreground);
-  background: transparent;
-  font-size: 13px;
-  font-weight: 680;
+  margin-left: 72px;
+  -webkit-app-region: no-drag;
 }
 
-.heymoss-brand-button:hover,
 .heymoss-icon-button:hover,
 .heymoss-new-chat:hover,
 .heymoss-row-action:hover {
@@ -965,6 +964,7 @@ body {
   display: flex;
   align-items: center;
   gap: 1px;
+  -webkit-app-region: no-drag;
 }
 
 .heymoss-icon-button {
@@ -1271,8 +1271,8 @@ body {
 .heymoss-sidebar-reopen {
   position: fixed;
   z-index: 5;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  left: 88px;
   display: grid;
   width: 30px;
   height: 30px;
@@ -1302,6 +1302,12 @@ body {
   padding: 0 18px;
   border-bottom: 1px solid var(--border);
   background: var(--background);
+  -webkit-app-region: drag;
+}
+
+.heymoss-workspace-header button,
+.heymoss-workspace-header [role="button"] {
+  -webkit-app-region: no-drag;
 }
 
 .heymoss-workspace-heading {

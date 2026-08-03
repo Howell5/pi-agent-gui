@@ -102,8 +102,9 @@ function Sidebar(props: {
   return (
     <aside className="heymoss-sidebar">
       <header className="heymoss-sidebar-brand">
-        <button className="heymoss-brand-button" type="button">Heymoss <ChevronDown className="size-3.5" /></button>
-        <div className="heymoss-brand-actions"><Button variant="ghost" size="icon-sm" className="heymoss-icon-button" title="搜索"><Search className="size-4" /></Button><Button variant="ghost" size="icon-sm" className="heymoss-icon-button" onClick={props.onToggleSidebar} title="收起侧栏"><PanelLeftClose className="size-4" /></Button></div>
+        <div className="heymoss-windowbar-controls"><Button variant="ghost" size="icon-sm" className="heymoss-icon-button" onClick={props.onToggleSidebar} title="收起侧栏"><PanelLeftClose className="size-4" /></Button></div>
+        <span className="heymoss-windowbar-spacer" aria-hidden="true" />
+        <div className="heymoss-brand-actions"><Button variant="ghost" size="icon-sm" className="heymoss-icon-button" title="搜索"><Search className="size-4" /></Button></div>
       </header>
       <button className="heymoss-new-chat" type="button" onClick={props.onNewChat}><MessageSquarePlus className="size-4" /><span>New Chat</span><kbd>⌘ N</kbd></button>
       <ScrollArea className="heymoss-sidebar-scroll">

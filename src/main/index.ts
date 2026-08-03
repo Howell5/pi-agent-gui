@@ -293,6 +293,8 @@ async function createWindow(): Promise<void> {
     minWidth: 980,
     minHeight: 640,
     title: 'Heymoss',
+    titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 16, y: 14 },
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
