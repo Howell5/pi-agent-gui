@@ -213,13 +213,13 @@ button:disabled {
 .aui-chain-of-thought {
   max-width: none;
   margin: 0 0 8px;
-  padding: 4px 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  padding: 0;
 }
 
 .aui-chain-of-thought [data-slot="collapsible-trigger"] {
   min-height: 24px;
-  padding: 0;
+  padding: 4px 0 6px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
 }
 
 /* Kibo's default space-y-4 adds a hidden-state margin around the content. */
@@ -275,6 +275,17 @@ button:disabled {
   color: var(--muted-foreground);
 }
 
+.aui-tool .aui-tool-chevron {
+  opacity: 0;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.aui-tool:hover .aui-tool-chevron,
+.aui-tool:focus-within .aui-tool-chevron,
+.aui-tool [data-slot="collapsible-trigger"][aria-expanded="true"] .aui-tool-chevron {
+  opacity: 1;
+}
+
 .aui-tool-content {
   margin-left: 22px;
   padding: 2px 0 6px;
@@ -293,7 +304,7 @@ button:disabled {
   margin: 2px 0;
   overflow: auto;
   padding: 5px 8px;
-  border-left: 1px solid var(--border);
+  border: 0;
   background: transparent;
   color: var(--muted-foreground);
   font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -302,7 +313,6 @@ button:disabled {
 }
 
 .aui-tool-output-error {
-  border-left-color: color-mix(in srgb, var(--destructive) 55%, var(--border));
   color: var(--destructive);
 }
 
