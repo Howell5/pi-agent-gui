@@ -26,6 +26,8 @@ corepack pnpm@9.15.0 test
 corepack pnpm@9.15.0 dev
 ```
 
+`dev` runs the app directly from source; macOS does not require a DMG for local development. Use `dist:mac` only when you need a distributable release artifact.
+
 The first run opens a folder picker. Configure a DeepSeek or OpenAI API token from the plug icon, choose a model, and send a message.
 
 During local development, the plug-icon form writes tokens to the ignored `.env.local` file instead of macOS secure storage. You can also create it directly:

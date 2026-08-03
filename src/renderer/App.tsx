@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Brain, ChevronDown, ChevronRight, FilePenLine, FileSearch, FileText, Folder, FolderOpen, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, Plug, Send, Square, Terminal, X } from 'lucide-react'
 import type { AppSnapshot, PermissionMode, ProviderView, Task, UiMessage } from '@shared/types'
@@ -58,7 +59,7 @@ function ToolGlyph({ name }: { name?: string }) {
 }
 
 function ToolMessage({ message }: { message: UiMessage }) {
-  const [expanded, setExpanded] = useState(message.toolState === 'running')
+  const [expanded, setExpanded] = useState(false)
   const output = message.toolOutput || (message.text.includes('\n') ? message.text.split('\n').slice(1).join('\n') : '')
   const detail = toolDetail(message)
 
@@ -77,7 +78,53 @@ function ToolMessage({ message }: { message: UiMessage }) {
   )
 }
 
-function AppMessage({ message, onPermission }: { message: UiMessage; onPermission: (message: UiMessage, approved: boolean) => void }) {
+type ActivityItem =
+  | { kind: 'thinking'; message: UiMessage }
+  | { kind: 'tool'; message: UiMessage }
+
+function formatDuration(milliseconds: number): string {
+  const totalSeconds = Math.max(0, Math.round(milliseconds / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  if (!minutes) return `${seconds}s`
+  const hours = Math.floor(minutes / 60)
+  if (!hours) return `${minutes}m ${seconds}s`
+  return `${hours}h ${minutes % 60}m ${seconds}s`
+}
+
+function activityLabels(items: ActivityItem[]): string[] {
+  const names = new Set(items.filter((item): item is { kind: 'tool'; message: UiMessage } => item.kind === 'tool').map((item) => item.message.toolName))
+  const labels: string[] = []
+  if ([...names].some((name) => name === 'edit' || name === 'write')) labels.push('Edited files')
+  if ([...names].some((name) => name === 'read' || name === 'ls' || name === 'grep' || name === 'find')) labels.push('Read files')
+  if (names.has('bash')) labels.push('Ran commands')
+  return labels
+}
+
+function ActivitySummary({ items, startedAt, endedAt, running }: { items: ActivityItem[]; startedAt: number; endedAt: number; running: boolean }) {
+  const labels = activityLabels(items)
+  return (
+    <details className={`activity-summary ${running ? 'running' : ''}`}>
+      <summary>
+        <span className="activity-summary-chevron"><ChevronRight size={15} /></span>
+        <span className="activity-summary-title">{running ? 'Working…' : `Worked for ${formatDuration(endedAt - startedAt)}`}</span>
+        {labels.length > 0 && <span className="activity-summary-labels">{labels.join(', ')}</span>}
+      </summary>
+      <div className="activity-summary-body">
+        {items.map((item, index) => item.kind === 'thinking' ? (
+          <div className="activity-thinking" key={`thinking-${item.message.id}-${index}`}>
+            <div className="activity-thinking-label"><Brain size={14} />思考过程</div>
+            <MarkdownMessage source={item.message.thinking ?? ''} />
+          </div>
+        ) : (
+          <ToolMessage key={item.message.id} message={item.message} />
+        ))}
+      </div>
+    </details>
+  )
+}
+
+function AppMessage({ message, onPermission, showThinking = true }: { message: UiMessage; onPermission: (message: UiMessage, approved: boolean) => void; showThinking?: boolean }) {
   if (message.role === 'approval') {
     return (
       <div className="approval-card">
@@ -105,8 +152,8 @@ function AppMessage({ message, onPermission }: { message: UiMessage; onPermissio
         {message.streaming && <span className="streaming-label"> · 生成中</span>}
       </div>
       <div className="message-body">
-        {message.role === 'assistant' && message.thinking && (
-          <details className="thinking-block" open={message.streaming}>
+        {showThinking && message.role === 'assistant' && message.thinking && (
+          <details className="thinking-block">
             <summary><Brain size={14} />思考过程</summary>
             <MarkdownMessage source={message.thinking} />
           </details>
@@ -115,6 +162,48 @@ function AppMessage({ message, onPermission }: { message: UiMessage; onPermissio
       </div>
     </div>
   )
+}
+
+function renderTurn(messages: UiMessage[], onPermission: (message: UiMessage, approved: boolean) => void, running: boolean): ReactNode[] {
+  const user = messages.find((message) => message.role === 'user')
+  const activity: ActivityItem[] = []
+  const visible: UiMessage[] = []
+
+  for (const message of messages) {
+    if (message.role === 'user') continue
+    if (message.role === 'tool') {
+      activity.push({ kind: 'tool', message })
+      continue
+    }
+    if (message.role === 'assistant') {
+      if (message.thinking?.trim()) activity.push({ kind: 'thinking', message })
+      if (message.text.trim()) visible.push({ ...message, thinking: undefined })
+      continue
+    }
+    visible.push(message)
+  }
+
+  const startedAt = user?.createdAt ?? messages[0]?.createdAt ?? Date.now()
+  const endedAt = messages[messages.length - 1]?.createdAt ?? startedAt
+  return [
+    ...(user ? [<AppMessage key={user.id} message={user} onPermission={onPermission} />] : []),
+    ...(activity.length ? [<ActivitySummary key={`activity-${startedAt}`} items={activity} startedAt={startedAt} endedAt={endedAt} running={running} />] : []),
+    ...visible.map((message) => <AppMessage key={message.id} message={message} onPermission={onPermission} showThinking={false} />),
+  ]
+}
+
+function renderConversation(messages: UiMessage[], onPermission: (message: UiMessage, approved: boolean) => void, running: boolean): ReactNode[] {
+  const turns: UiMessage[][] = []
+  let current: UiMessage[] = []
+  for (const message of messages) {
+    if (message.role === 'user' && current.length) {
+      turns.push(current)
+      current = []
+    }
+    current.push(message)
+  }
+  if (current.length) turns.push(current)
+  return turns.flatMap((turn, index) => renderTurn(turn, onPermission, running && index === turns.length - 1))
 }
 
 function ProviderSettings({ snapshot, onClose }: { snapshot: AppSnapshot; onClose: () => void }) {
@@ -437,7 +526,7 @@ export function App() {
                 <div className="heading-actions"><span className={`status-pill ${activeTask?.status ?? 'idle'}`}>{activeTask ? formatStatus(activeTask) : '新会话'}</span><button className="button subtle" onClick={newTask}><MessageSquarePlus size={15} />新会话</button></div>
               </div>
               <div className="message-scroll">
-                {activeTask?.messages.length ? activeTask.messages.map((message) => <AppMessage key={message.id} message={message} onPermission={(item, approved) => void respondPermission(item, approved)} />) : <div className="conversation-empty">描述你希望 Agent 在这个项目里完成什么。</div>}
+                {activeTask?.messages.length ? renderConversation(activeTask.messages, (item, approved) => void respondPermission(item, approved), activeTask.status === 'running') : <div className="conversation-empty">描述你希望 Agent 在这个项目里完成什么。</div>}
               </div>
               {error && <div className="error-banner inline-error">{error}</div>}
               <div className="composer-wrap">
