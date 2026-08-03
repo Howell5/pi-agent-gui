@@ -927,6 +927,10 @@ body {
   background: var(--background);
 }
 
+.heymoss-main.is-sidebar-collapsed .heymoss-workspace-header {
+  padding-left: 58px;
+}
+
 .heymoss-sidebar {
   position: relative;
   display: flex;
@@ -1991,6 +1995,15 @@ body {
 .heymoss-context-file small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .heymoss-inline-action { border: 0; color: var(--muted-foreground); background: transparent; font-size: 10px; }
 .heymoss-inline-action:hover { color: var(--foreground); }
+
+/* Inline Markdown code is information, not an accent badge. */
+.inline-code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: var(--foreground);
+  background: #ececea;
+  font: 0.9em ui-monospace, SFMono-Regular, Menlo, monospace;
+}
 
 @media (max-width: 1080px) {
   .heymoss-sidebar { width: 236px; flex-basis: 236px; }
