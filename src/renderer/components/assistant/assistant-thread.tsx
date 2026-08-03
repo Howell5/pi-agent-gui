@@ -215,7 +215,6 @@ function AssistantMessage() {
   }
   return (
     <MessagePrimitive.Root className="aui-message aui-message-assistant" data-role="assistant">
-      <div className="aui-message-meta">Heymoss</div>
       <div className="aui-message-body">
         <MessagePrimitive.GroupedParts
           groupBy={groupPartByType({ reasoning: ["group-activity", "group-reasoning"], "tool-call": ["group-activity", "group-tool"] })}
