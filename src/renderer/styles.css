@@ -321,16 +321,6 @@ button:disabled {
   border-left: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
 }
 
-.heymoss-session-label {
-  min-height: 23px;
-  padding: 3px 8px;
-  color: var(--muted-foreground);
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .heymoss-session-main {
   height: 30px;
   flex: 1;
@@ -1168,16 +1158,6 @@ body {
   margin: 1px 0 4px 17px;
   padding: 2px 0 1px 8px;
   border-left: 1px solid #dcddd9;
-}
-
-.heymoss-session-label {
-  min-height: 22px;
-  padding: 3px 7px;
-  color: var(--muted-foreground);
-  font-size: 9px;
-  font-weight: 650;
-  letter-spacing: .08em;
-  text-transform: uppercase;
 }
 
 .heymoss-session-row {
