@@ -133,7 +133,8 @@ button:disabled {
 
 .aui-thread-viewport {
   display: flex;
-  height: 100%;
+  height: auto;
+  flex: 1 1 auto;
   min-height: 0;
   flex-direction: column;
   overflow-x: hidden;
@@ -162,7 +163,8 @@ button:disabled {
   width: min(100%, 920px);
   flex: 0 0 auto;
   margin: 0 auto;
-  padding: 0 clamp(24px, 7vw, 92px) 24px;
+  padding: 10px clamp(24px, 7vw, 92px) 24px;
+  background: var(--background);
 }
 
 .aui-message {

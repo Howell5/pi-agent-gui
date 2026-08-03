@@ -289,10 +289,10 @@ export function AssistantThread({ task, modelOptions, modelKey, permissionMode, 
             <ThreadPrimitive.Empty><div className="aui-thread-empty">描述你希望 Agent 在这个项目里完成什么。</div></ThreadPrimitive.Empty>
             <ThreadPrimitive.Messages>{() => <AssistantMessage />}</ThreadPrimitive.Messages>
           </div>
-          <ThreadPrimitive.ViewportFooter className="aui-thread-footer">
-            <AssistantComposer modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} onModelChange={onModelChange} onPermissionModeChange={onPermissionModeChange} onAttachFile={onAttachFile} />
-          </ThreadPrimitive.ViewportFooter>
         </ThreadPrimitive.Viewport>
+        <div className="aui-thread-footer">
+          <AssistantComposer modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} onModelChange={onModelChange} onPermissionModeChange={onPermissionModeChange} onAttachFile={onAttachFile} />
+        </div>
       </ThreadPrimitive.Root>
     </AssistantRuntimeProvider>
   )
