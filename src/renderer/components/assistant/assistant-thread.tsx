@@ -1,0 +1,298 @@
+import {
+  AssistantRuntimeProvider,
+  ComposerPrimitive,
+  MessagePrimitive,
+  ThreadPrimitive,
+  fromThreadMessageLike,
+  groupPartByType,
+  useAui,
+  useAuiState,
+  useExternalStoreRuntime,
+  type AppendMessage,
+  type ToolCallMessagePartProps,
+  type ThreadMessageLike,
+} from "@assistant-ui/react"
+import type { ToolUIPart } from "ai"
+import { Check, FileUp, LoaderCircle, Send, Square, X } from "lucide-react"
+import { useMemo } from "react"
+import { ChainOfThought, ChainOfThoughtContent, ChainOfThoughtHeader, ChainOfThoughtStep } from "@/components/ai-elements/chain-of-thought"
+import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "@/components/ai-elements/tool"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { ModelOption, PermissionMode, Task, UiMessage } from "@shared/types"
+import { MarkdownMessage } from "../../MarkdownMessage"
+
+type AssistantThreadProps = {
+  task: Task | null
+  modelOptions: ModelOption[]
+  modelKey: string
+  permissionMode: PermissionMode
+  settingsEditable: boolean | undefined
+  settingsSaving: boolean
+  onModelChange: (value: string) => void
+  onPermissionModeChange: (value: PermissionMode) => void
+  onNew: (text: string) => Promise<void>
+  onCancel: () => Promise<void>
+  onPermission: (approvalId: string, approved: boolean) => Promise<void>
+  onAttachFile: () => Promise<string | null>
+}
+
+type ActivitySummary = {
+  durationMs: number
+  labels: string[]
+}
+
+type ThreadPart = Exclude<ThreadMessageLike["content"], string> extends readonly (infer Part)[] ? Part : never
+
+function formatDuration(milliseconds: number): string {
+  const seconds = Math.max(0, Math.round(milliseconds / 1000))
+  const minutes = Math.floor(seconds / 60)
+  if (!minutes) return `${seconds}s`
+  const hours = Math.floor(minutes / 60)
+  if (!hours) return `${minutes}m ${seconds % 60}s`
+  return `${hours}h ${minutes % 60}m ${seconds % 60}s`
+}
+
+function activityLabels(messages: UiMessage[]): string[] {
+  const names = new Set(messages.filter((message) => message.role === "tool").map((message) => message.toolName))
+  const labels: string[] = []
+  if ([...names].some((name) => name === "edit" || name === "write")) labels.push("Edited files")
+  if ([...names].some((name) => name === "read" || name === "ls" || name === "grep" || name === "find")) labels.push("Read files")
+  if (names.has("bash")) labels.push("Ran commands")
+  return labels
+}
+
+function toolPart(message: UiMessage): ThreadPart {
+  const args = message.toolArgs ?? {}
+  return {
+    type: "tool-call",
+    toolCallId: message.toolCallId ?? message.id,
+    toolName: message.toolName ?? "tool",
+    args: args as Record<string, never>,
+    argsText: JSON.stringify(args),
+    ...(message.toolOutput ? { result: message.toolOutput } : {}),
+    ...(message.toolState === "error" ? { isError: true } : {}),
+  }
+}
+
+function approvalPart(message: UiMessage): ThreadPart {
+  return {
+    type: "tool-call",
+    toolCallId: message.approvalId ?? message.id,
+    toolName: "approval",
+    args: { description: message.text },
+    argsText: JSON.stringify({ description: message.text }),
+    approval: {
+      id: message.approvalId ?? message.id,
+      approved: message.approvalState === "approved" ? true : message.approvalState === "denied" ? false : undefined,
+    },
+  }
+}
+
+function buildThreadMessages(messages: UiMessage[], task: Task | null): ThreadMessageLike[] {
+  const turns: UiMessage[][] = []
+  let current: UiMessage[] = []
+  for (const message of messages) {
+    if (message.role === "user" && current.length) {
+      turns.push(current)
+      current = []
+    }
+    current.push(message)
+  }
+  if (current.length) turns.push(current)
+
+  return turns.flatMap((turn, turnIndex) => {
+    const user = turn.find((message) => message.role === "user")
+    const hidden = turn.filter((message) => message.role === "tool" || message.role === "approval" || (message.role === "assistant" && message.thinking?.trim()))
+    const visibleText = turn.filter((message) => message.role === "assistant" && message.text.trim())
+    const activityParts: ThreadPart[] = hidden.map((message) => message.role === "approval" ? approvalPart(message) : message.role === "tool" ? toolPart(message) : { type: "reasoning" as const, text: message.thinking ?? "" })
+    const textParts: ThreadPart[] = visibleText.map((message) => ({ type: "text" as const, text: message.text }))
+    const startedAt = user?.createdAt ?? turn[0]?.createdAt ?? Date.now()
+    const endedAt = turn[turn.length - 1]?.createdAt ?? startedAt
+    const hasRunningTool = hidden.some((message) => message.role === "tool" && message.toolState === "running")
+    const waitingForApproval = hidden.some((message) => message.role === "approval" && message.approvalState === "pending")
+    const isCurrentTurn = turnIndex === turns.length - 1
+    const status = waitingForApproval
+      ? { type: "requires-action" as const, reason: "tool-calls" as const }
+      : task?.status === "failed" && isCurrentTurn
+        ? { type: "incomplete" as const, reason: "error" as const }
+        : hasRunningTool || (task?.status === "running" && isCurrentTurn)
+          ? { type: "running" as const }
+          : { type: "complete" as const, reason: "stop" as const }
+    const activity: ActivitySummary | undefined = hidden.length ? {
+      durationMs: endedAt - startedAt,
+      labels: activityLabels(turn),
+    } : undefined
+    const result: ThreadMessageLike[] = []
+    if (user) {
+      result.push({
+        id: user.id,
+        role: "user",
+        createdAt: new Date(user.createdAt),
+        content: [{ type: "text", text: user.text }],
+        metadata: { custom: {} },
+      })
+    }
+    if (activityParts.length || textParts.length) {
+      result.push({
+        id: `assistant-turn-${user?.id ?? turn[0]?.id ?? turnIndex}`,
+        role: "assistant",
+        createdAt: new Date(endedAt),
+        content: [...activityParts, ...textParts],
+        status,
+        metadata: { custom: { activity } },
+      })
+    }
+    for (const message of turn) {
+      if (message.role === "system") {
+        result.push({ id: message.id, role: "system", createdAt: new Date(message.createdAt), content: [{ type: "text", text: message.text }], metadata: { custom: {} } })
+      }
+    }
+    return result
+  })
+}
+
+function AssistantText({ text }: { text: string }) {
+  return <MarkdownMessage source={text} />
+}
+
+function AssistantTool({ toolName, args, result, isError, status, approval, respondToApproval }: ToolCallMessagePartProps) {
+  const approvalPending = approval && approval.approved === undefined
+  const toolState: ToolUIPart["state"] = approvalPending
+    ? "approval-requested"
+    : status.type === "running"
+      ? "input-available"
+      : isError
+        ? "output-error"
+        : "output-available"
+  const title = toolName === "approval" ? "需要授权" : toolName
+  return (
+    <Tool defaultOpen={false} className="aui-tool">
+      <ToolHeader title={title} type={`tool-${toolName}`} state={toolState} />
+      <ToolContent>
+        <ToolInput input={args} />
+        <ToolOutput output={result} errorText={isError ? "工具执行失败" : undefined} />
+        {approvalPending && (
+          <div className="flex gap-2 border-t px-4 py-3">
+            <Button size="sm" onClick={() => respondToApproval({ approved: true })}><Check className="size-3.5" />允许</Button>
+            <Button size="sm" variant="outline" onClick={() => respondToApproval({ approved: false })}><X className="size-3.5" />拒绝</Button>
+          </div>
+        )}
+      </ToolContent>
+    </Tool>
+  )
+}
+
+function AssistantMessage() {
+  const role = useAuiState((state) => state.message.role)
+  const activity = useAuiState((state) => (state.message.metadata.custom as { activity?: ActivitySummary } | undefined)?.activity)
+  if (role === "user") {
+    return (
+      <MessagePrimitive.Root className="aui-message aui-message-user" data-role="user">
+        <div className="aui-message-meta">你</div>
+        <div className="aui-message-user-bubble"><MessagePrimitive.Parts components={{ Text: ({ text }) => <span>{text}</span> }} /></div>
+      </MessagePrimitive.Root>
+    )
+  }
+  if (role === "system") {
+    return <MessagePrimitive.Root className="aui-message aui-message-system" data-role="system"><MessagePrimitive.Parts components={{ Text: ({ text }) => <span>{text}</span> }} /></MessagePrimitive.Root>
+  }
+  return (
+    <MessagePrimitive.Root className="aui-message aui-message-assistant" data-role="assistant">
+      <div className="aui-message-meta">Heymoss</div>
+      <div className="aui-message-body">
+        <MessagePrimitive.GroupedParts
+          groupBy={groupPartByType({ reasoning: ["group-activity", "group-reasoning"], "tool-call": ["group-activity", "group-tool"] })}
+          indicator="always"
+        >
+          {({ part, children }) => {
+            switch (part.type) {
+              case "group-activity":
+                return (
+                  <ChainOfThought defaultOpen={false} className="aui-chain-of-thought">
+                    <ChainOfThoughtHeader>{activity ? `Worked for ${formatDuration(activity.durationMs)}` : "工作过程"}{activity?.labels.length ? ` · ${activity.labels.join(", ")}` : ""}</ChainOfThoughtHeader>
+                    <ChainOfThoughtContent>{children}</ChainOfThoughtContent>
+                  </ChainOfThought>
+                )
+              case "group-tool":
+                return <div className="aui-tool-group">{children}</div>
+              case "group-reasoning":
+                return <div className="aui-reasoning-group">{children}</div>
+              case "text":
+                return <AssistantText text={part.text} />
+              case "reasoning":
+                return <ChainOfThoughtStep label="思考过程" status={part.status.type === "running" ? "active" : "complete"}><MarkdownMessage source={part.text} /></ChainOfThoughtStep>
+              case "tool-call":
+                return <AssistantTool {...part} />
+              case "indicator":
+                return <div className="aui-message-indicator"><LoaderCircle className="size-4 animate-spin" />正在工作…</div>
+              default:
+                return null
+            }
+          }}
+        </MessagePrimitive.GroupedParts>
+      </div>
+    </MessagePrimitive.Root>
+  )
+}
+
+function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, onModelChange, onPermissionModeChange, onAttachFile }: Omit<AssistantThreadProps, "task" | "onNew" | "onCancel" | "onPermission">) {
+  const aui = useAui()
+  const running = useAuiState((state) => state.thread.isRunning)
+  const canSend = useAuiState((state) => state.composer.canSend)
+  async function attachFile() {
+    const path = await onAttachFile()
+    if (!path) return
+    const existing = aui.composer.getState().text
+    aui.composer.setText(`${existing}${existing ? " " : ""}@${path} `)
+  }
+  return (
+    <ComposerPrimitive.Root className="aui-composer">
+      <div className="aui-composer-toolbar">
+        <Select value={modelKey} onValueChange={onModelChange} disabled={!settingsEditable || settingsSaving || !modelOptions.length}>
+          <SelectTrigger className="aui-composer-select"><SelectValue placeholder="先配置模型服务商" /></SelectTrigger>
+          <SelectContent>{modelOptions.map((model) => <SelectItem key={model.key} value={model.key}>{model.name}{model.providerName ? ` · ${model.providerName}` : ""}</SelectItem>)}</SelectContent>
+        </Select>
+        <Select value={permissionMode} onValueChange={(value) => onPermissionModeChange(value as PermissionMode)} disabled={!settingsEditable || settingsSaving}>
+          <SelectTrigger className="aui-composer-mode"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="ask">Ask</SelectItem><SelectItem value="auto">Auto</SelectItem></SelectContent>
+        </Select>
+        <Button type="button" variant="ghost" size="sm" onClick={() => void attachFile()} disabled={!modelOptions.length}><FileUp className="size-3.5" />@file</Button>
+        <div className="flex-1" />
+        {running ? <ComposerPrimitive.Cancel asChild><Button type="button" variant="destructive" size="icon"><Square className="size-3.5 fill-current" /></Button></ComposerPrimitive.Cancel> : <ComposerPrimitive.Send asChild><Button type="button" size="icon" disabled={!canSend || settingsSaving || !modelOptions.length}><Send className="size-4" /></Button></ComposerPrimitive.Send>}
+      </div>
+      <ComposerPrimitive.Input placeholder={modelOptions.length ? "让 Agent 在这个项目里做什么？" : "先在右上角配置模型服务商"} disabled={!modelOptions.length} className="aui-composer-input" />
+    </ComposerPrimitive.Root>
+  )
+}
+
+export function AssistantThread({ task, modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, onModelChange, onPermissionModeChange, onNew, onCancel, onPermission, onAttachFile }: AssistantThreadProps) {
+  const externalMessages = useMemo(() => buildThreadMessages(task?.messages ?? [], task), [task])
+  const runtime = useExternalStoreRuntime<ThreadMessageLike>({
+    messages: externalMessages,
+    isRunning: task?.status === "running" || task?.status === "waiting_approval",
+    isSendDisabled: !modelOptions.length || Boolean(settingsSaving),
+    convertMessage: (message) => fromThreadMessageLike(message, message.id ?? "message", { type: "complete", reason: "stop" }),
+    onNew: async (message: AppendMessage) => {
+      const text = message.content.filter((part): part is { type: "text"; text: string } => part.type === "text").map((part) => part.text).join("").trim()
+      if (text) await onNew(text)
+    },
+    onCancel,
+    onRespondToToolApproval: async ({ approvalId, approved }) => onPermission(approvalId, approved),
+  })
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      <ThreadPrimitive.Root className="aui-thread">
+        <ThreadPrimitive.Viewport className="aui-thread-viewport">
+          <div className="aui-thread-content">
+            <ThreadPrimitive.Empty><div className="aui-thread-empty">描述你希望 Agent 在这个项目里完成什么。</div></ThreadPrimitive.Empty>
+            <ThreadPrimitive.Messages>{() => <AssistantMessage />}</ThreadPrimitive.Messages>
+          </div>
+          <ThreadPrimitive.ViewportFooter className="aui-thread-footer">
+            <AssistantComposer modelOptions={modelOptions} modelKey={modelKey} permissionMode={permissionMode} settingsEditable={settingsEditable} settingsSaving={settingsSaving} onModelChange={onModelChange} onPermissionModeChange={onPermissionModeChange} onAttachFile={onAttachFile} />
+          </ThreadPrimitive.ViewportFooter>
+        </ThreadPrimitive.Viewport>
+      </ThreadPrimitive.Root>
+    </AssistantRuntimeProvider>
+  )
+}
