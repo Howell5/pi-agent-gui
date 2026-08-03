@@ -1,21 +1,23 @@
 import {
   AssistantRuntimeProvider,
+  ChainOfThoughtPrimitive,
   ComposerPrimitive,
+  MessagePartPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
   fromThreadMessageLike,
-  groupPartByType,
+  useMessageTiming,
   useAui,
   useAuiState,
   useExternalStoreRuntime,
   type AppendMessage,
+  type ReasoningMessagePartProps,
   type ToolCallMessagePartProps,
   type ThreadMessageLike,
 } from "@assistant-ui/react"
 import type { ToolUIPart } from "ai"
-import { Check, FileUp, LoaderCircle, RefreshCw, Send, Square, X } from "lucide-react"
+import { Check, FileUp, RefreshCw, Send, Square, X } from "lucide-react"
 import { useEffect, useMemo, useRef } from "react"
-import { ChainOfThought, ChainOfThoughtContent, ChainOfThoughtHeader, ChainOfThoughtStep } from "@/components/ai-elements/chain-of-thought"
 import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -148,7 +150,20 @@ function buildThreadMessages(messages: UiMessage[], task: Task | null): ThreadMe
         createdAt: new Date(endedAt),
         content: [...activityParts, ...textParts],
         status,
-        metadata: { custom: { activity } },
+        metadata: {
+          custom: { activity },
+          ...(activity && {
+            // Keep the host's measured duration in Assistant UI's native
+            // timing channel so renderers can consume it without knowing
+            // about Heymoss' message store.
+            timing: {
+              streamStartTime: startedAt,
+              totalStreamTime: activity.durationMs,
+              totalChunks: hidden.length,
+              toolCallCount: hidden.filter((message) => message.role === "tool").length,
+            },
+          }),
+        },
       })
     }
     for (const message of turn) {
@@ -206,53 +221,60 @@ function AssistantTool({ toolName, args, result, isError, status, approval, resp
   )
 }
 
+function AssistantReasoning({ text, status }: ReasoningMessagePartProps) {
+  return (
+    <div className="aui-reasoning-part" data-status={status.type}>
+      <MarkdownMessage source={text} />
+      <MessagePartPrimitive.InProgress>
+        <span className="aui-reasoning-progress" aria-hidden="true">正在思考…</span>
+      </MessagePartPrimitive.InProgress>
+    </div>
+  )
+}
+
+function AssistantChainOfThought() {
+  const collapsed = useAuiState((state) => state.chainOfThought.collapsed)
+  const activity = useAuiState((state) => (state.message.metadata.custom as { activity?: ActivitySummary } | undefined)?.activity)
+  const timing = useMessageTiming()
+  const durationMs = timing?.totalStreamTime ?? activity?.durationMs ?? 0
+  const labels = activity?.labels ?? []
+
+  return (
+    <ChainOfThoughtPrimitive.Root className="aui-chain-of-thought">
+      <ChainOfThoughtPrimitive.AccordionTrigger className="aui-chain-trigger">
+        <span className="aui-chain-summary">Worked for {formatDuration(durationMs)}{labels.length ? ` · ${labels.join(", ")}` : ""}</span>
+        <span className="aui-chain-chevron" aria-hidden="true">⌄</span>
+      </ChainOfThoughtPrimitive.AccordionTrigger>
+      {!collapsed && (
+        <ChainOfThoughtPrimitive.Parts
+          components={{
+            Reasoning: AssistantReasoning,
+            tools: { Fallback: AssistantTool },
+            Layout: ({ children }) => <div className="aui-chain-parts">{children}</div>,
+          }}
+        />
+      )}
+    </ChainOfThoughtPrimitive.Root>
+  )
+}
+
 function AssistantMessage() {
   const role = useAuiState((state) => state.message.role)
-  const activity = useAuiState((state) => (state.message.metadata.custom as { activity?: ActivitySummary } | undefined)?.activity)
   if (role === "user") {
     return (
       <MessagePrimitive.Root className="aui-message aui-message-user" data-role="user">
         <div className="aui-message-meta">你</div>
-        <div className="aui-message-user-bubble"><MessagePrimitive.Parts components={{ Text: ({ text }) => <span>{text}</span> }} /></div>
+        <div className="aui-message-user-bubble"><MessagePrimitive.Parts components={{ Text: () => <MessagePartPrimitive.Text smooth={false} /> }} /></div>
       </MessagePrimitive.Root>
     )
   }
   if (role === "system") {
-    return <MessagePrimitive.Root className="aui-message aui-message-system" data-role="system"><MessagePrimitive.Parts components={{ Text: ({ text }) => <span>{text}</span> }} /></MessagePrimitive.Root>
+    return <MessagePrimitive.Root className="aui-message aui-message-system" data-role="system"><MessagePrimitive.Parts components={{ Text: () => <MessagePartPrimitive.Text smooth={false} /> }} /></MessagePrimitive.Root>
   }
   return (
     <MessagePrimitive.Root className="aui-message aui-message-assistant" data-role="assistant">
       <div className="aui-message-body">
-        <MessagePrimitive.GroupedParts
-          groupBy={groupPartByType({ reasoning: ["group-activity", "group-reasoning"], "tool-call": ["group-activity", "group-tool"] })}
-          indicator="always"
-        >
-          {({ part, children }) => {
-            switch (part.type) {
-              case "group-activity":
-                return (
-                  <ChainOfThought defaultOpen={false} className="aui-chain-of-thought">
-                    <ChainOfThoughtHeader>{activity ? `Worked for ${formatDuration(activity.durationMs)}` : "工作过程"}{activity?.labels.length ? ` · ${activity.labels.join(", ")}` : ""}</ChainOfThoughtHeader>
-                    <ChainOfThoughtContent>{children}</ChainOfThoughtContent>
-                  </ChainOfThought>
-                )
-              case "group-tool":
-                return <div className="aui-tool-group">{children}</div>
-              case "group-reasoning":
-                return <div className="aui-reasoning-group">{children}</div>
-              case "text":
-                return <AssistantText text={part.text} />
-              case "reasoning":
-                return <ChainOfThoughtStep label="思考过程" status={part.status.type === "running" ? "active" : "complete"}><MarkdownMessage source={part.text} /></ChainOfThoughtStep>
-              case "tool-call":
-                return <AssistantTool {...part} />
-              case "indicator":
-                return <div className="aui-message-indicator"><LoaderCircle className="size-4 animate-spin" />正在工作…</div>
-              default:
-                return null
-            }
-          }}
-        </MessagePrimitive.GroupedParts>
+        <MessagePrimitive.Parts components={{ Text: ({ text }) => <AssistantText text={text} />, ChainOfThought: AssistantChainOfThought }} />
       </div>
     </MessagePrimitive.Root>
   )

@@ -551,17 +551,6 @@ button:disabled {
   padding: 0;
 }
 
-.aui-chain-of-thought > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] {
-  min-height: 24px;
-  padding: 4px 0 6px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
-}
-
-/* Kibo's default space-y-4 adds a hidden-state margin around the content. */
-.aui-chain-of-thought > [data-slot="collapsible"] {
-  margin: 0;
-}
-
 .aui-tool-group {
   display: grid;
   gap: 2px;
@@ -1467,34 +1456,66 @@ body {
   margin: 2px 0 18px;
 }
 
-.aui-chain-of-thought > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] {
+/* Assistant UI owns the accordion state; these are only Heymoss' visual
+   tokens for its render primitives. */
+.aui-chain-trigger {
   display: flex;
+  width: 100%;
   min-height: 40px;
   align-items: center;
   gap: 7px;
   padding: 0;
+  border: 0;
   border-bottom: 1px solid var(--border);
   color: var(--muted-foreground);
+  background: transparent;
+  font: inherit;
   font-size: 12px;
+  text-align: left;
 }
 
-.aui-chain-of-thought > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] > svg:last-child {
+.aui-chain-trigger:hover,
+.aui-chain-trigger:focus-visible {
+  color: var(--foreground);
+}
+
+.aui-chain-summary {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aui-chain-chevron {
   opacity: 0;
+  font-size: 16px;
+  line-height: 1;
+  transform: translateY(-1px);
   transition: opacity 120ms ease, transform 120ms ease;
 }
 
-.aui-chain-of-thought:hover > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] > svg:last-child,
-.aui-chain-of-thought:focus-within > [data-slot="collapsible"]:first-child > [data-slot="collapsible-trigger"] > svg:last-child,
-.aui-chain-of-thought [data-slot="collapsible-trigger"][aria-expanded="true"] > svg:last-child {
+.aui-chain-trigger:hover .aui-chain-chevron,
+.aui-chain-trigger:focus-visible .aui-chain-chevron {
   opacity: 1;
 }
 
-.aui-chain-of-thought > [data-slot="collapsible"] {
-  margin: 0;
+.aui-chain-parts {
+  display: grid;
+  gap: 2px;
+  padding: 7px 0 4px;
 }
 
-.aui-chain-of-thought > [data-slot="collapsible"] + [data-slot="collapsible"] {
-  margin: 0;
+.aui-reasoning-part {
+  margin: 0 0 8px 21px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.aui-reasoning-progress {
+  color: var(--primary);
+  font-size: 10px;
 }
 
 .aui-tool-group {
