@@ -19,6 +19,7 @@ import {
 import type { ComponentProps, ReactNode } from "react";
 import { isValidElement } from "react";
 import { CodeBlock } from "./code-block";
+import { Shimmer } from "./shimmer";
 
 export type ToolProps = ComponentProps<typeof Collapsible>;
 
@@ -73,24 +74,37 @@ export const ToolHeader = ({
   state,
   compact = false,
   ...props
-}: ToolHeaderProps) => (
-  <CollapsibleTrigger
-    className={cn(
-      "group flex w-full items-center justify-between gap-4 p-3",
-      className
-    )}
-    {...props}
-  >
-    <div className="flex items-center gap-2">
-      <WrenchIcon className="size-4 text-muted-foreground" />
-      <span className="font-medium text-sm">
-        {title ?? type.split("-").slice(1).join("-")}
-      </span>
-      {compact ? <span aria-label={statusLabels[state]} className="aui-tool-status">{statusIcons[state]}</span> : getStatusBadge(state)}
-    </div>
-    <ChevronDownIcon className="aui-tool-chevron size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
-  </CollapsibleTrigger>
-);
+}: ToolHeaderProps) => {
+  const displayTitle = title ?? type.split("-").slice(1).join("-");
+  const isWorking = state === "input-streaming" || state === "input-available";
+
+  return (
+    <CollapsibleTrigger
+      className={cn(
+        "group flex w-full items-center justify-between gap-4 p-3",
+        className
+      )}
+      {...props}
+    >
+      <div className="flex items-center gap-2">
+        <WrenchIcon className="size-4 text-muted-foreground" />
+        {compact ? (
+          isWorking ? (
+            <Shimmer as="span" duration={1.8} spread={2} className="font-medium text-sm">
+              {displayTitle}
+            </Shimmer>
+          ) : (
+            <span className="font-medium text-sm">{displayTitle}</span>
+          )
+        ) : (
+          <span className="font-medium text-sm">{displayTitle}</span>
+        )}
+        {!compact && getStatusBadge(state)}
+      </div>
+      <ChevronDownIcon className="aui-tool-chevron size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+    </CollapsibleTrigger>
+  );
+};
 
 export type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
 
