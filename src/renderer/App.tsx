@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { Brain, ChevronDown, ChevronRight, FolderOpen, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, Plug, Send, Square, Terminal, X } from 'lucide-react'
+import { Brain, ChevronDown, ChevronRight, FilePenLine, FileSearch, FileText, FolderOpen, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, Plug, Send, Square, Terminal, X } from 'lucide-react'
 import type { AppSnapshot, PermissionMode, ProviderView, Task, UiMessage } from '@shared/types'
 import { MarkdownMessage } from './MarkdownMessage'
 
@@ -28,6 +28,26 @@ function toolStatusLabel(state: UiMessage['toolState']): string {
   return '完成'
 }
 
+function toolSummary(name: string | undefined): string {
+  switch (name) {
+    case 'ls': return '查看文件'
+    case 'read': return '读取文件'
+    case 'grep':
+    case 'find': return '搜索文件'
+    case 'bash': return '运行命令'
+    case 'edit':
+    case 'write': return '编辑文件'
+    default: return name ?? '工具'
+  }
+}
+
+function ToolGlyph({ name }: { name?: string }) {
+  if (name === 'read') return <FileText size={14} />
+  if (name === 'grep' || name === 'find') return <FileSearch size={14} />
+  if (name === 'edit' || name === 'write') return <FilePenLine size={14} />
+  return <Terminal size={14} />
+}
+
 function ToolMessage({ message }: { message: UiMessage }) {
   const [expanded, setExpanded] = useState(message.toolState === 'running')
   const output = message.toolOutput || (message.text.includes('\n') ? message.text.split('\n').slice(1).join('\n') : '')
@@ -35,14 +55,13 @@ function ToolMessage({ message }: { message: UiMessage }) {
 
   return (
     <div className={`tool-card ${message.toolState ?? ''}`}>
-      <button type="button" className="tool-card-header" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded}>
-        <span className="tool-icon"><Terminal size={14} /></span>
+      <button type="button" className="tool-card-header" title={detail || undefined} onClick={() => setExpanded((value) => !value)} aria-expanded={expanded}>
+        <span className="tool-icon"><ToolGlyph name={message.toolName} /></span>
         <span className="tool-info">
-          <span className="tool-name">{message.toolName ?? '工具'}</span>
-          {detail && <span className="tool-detail">{detail}</span>}
+          <span className="tool-name">{toolSummary(message.toolName)}</span>
         </span>
-        <span className="tool-status">{toolStatusLabel(message.toolState)}</span>
-        {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+        {message.toolState !== 'done' && <span className="tool-status">{toolStatusLabel(message.toolState)}</span>}
+        {expanded ? <ChevronDown className="tool-chevron" size={14} /> : <ChevronRight className="tool-chevron" size={14} />}
       </button>
       {expanded && output && <div className="tool-card-body"><pre>{output}</pre></div>}
     </div>
