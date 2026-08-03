@@ -1496,8 +1496,13 @@ body {
 }
 
 .aui-chain-trigger:hover .aui-chain-chevron,
-.aui-chain-trigger:focus-visible .aui-chain-chevron {
+.aui-chain-trigger:focus-visible .aui-chain-chevron,
+.aui-chain-trigger[aria-expanded="true"] .aui-chain-chevron {
   opacity: 1;
+}
+
+.aui-chain-trigger[aria-expanded="true"] .aui-chain-chevron {
+  transform: translateY(-1px) rotate(180deg);
 }
 
 .aui-chain-parts {

@@ -17,7 +17,7 @@ import {
 } from "@assistant-ui/react"
 import type { ToolUIPart } from "ai"
 import { Check, FileUp, RefreshCw, Send, Square, X } from "lucide-react"
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -233,7 +233,7 @@ function AssistantReasoning({ text, status }: ReasoningMessagePartProps) {
 }
 
 function AssistantChainOfThought() {
-  const collapsed = useAuiState((state) => state.chainOfThought.collapsed)
+  const [open, setOpen] = useState(false)
   const activity = useAuiState((state) => (state.message.metadata.custom as { activity?: ActivitySummary } | undefined)?.activity)
   const timing = useMessageTiming()
   const durationMs = timing?.totalStreamTime ?? activity?.durationMs ?? 0
@@ -241,11 +241,11 @@ function AssistantChainOfThought() {
 
   return (
     <ChainOfThoughtPrimitive.Root className="aui-chain-of-thought">
-      <ChainOfThoughtPrimitive.AccordionTrigger className="aui-chain-trigger">
+      <ChainOfThoughtPrimitive.AccordionTrigger className="aui-chain-trigger" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
         <span className="aui-chain-summary">Worked for {formatDuration(durationMs)}{labels.length ? ` · ${labels.join(", ")}` : ""}</span>
         <span className="aui-chain-chevron" aria-hidden="true">⌄</span>
       </ChainOfThoughtPrimitive.AccordionTrigger>
-      {!collapsed && (
+      {open && (
         <ChainOfThoughtPrimitive.Parts
           components={{
             Reasoning: AssistantReasoning,
