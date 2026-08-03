@@ -1,6 +1,6 @@
 {
   "name": "pi-agent-gui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A small Pi-first local Agent GUI for macOS.",
   "author": "Pi Agent GUI contributors",
@@ -60,6 +60,7 @@
         }
       ]
     },
+    "afterPack": "scripts/after-pack.cjs",
     "dmg": {
       "title": "Pi Agent GUI"
     }

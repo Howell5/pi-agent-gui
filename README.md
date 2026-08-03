@@ -36,14 +36,14 @@ node scripts/verify-package.mjs
 corepack pnpm@9.15.0 dist:mac
 ```
 
-The unsigned DMG is generated under `dist/`. Release checksums are generated with `pnpm hash:release` after copying the DMG into `release/`.
+The DMG is ad-hoc signed as a coherent app bundle, but it is not signed with an Apple Developer ID or notarized. It is generated under `dist/`. Release checksums are generated with `pnpm hash:release` after copying the DMG into `release/`.
 
 ## Install the unsigned build
 
-Download the Apple Silicon DMG from the GitHub Release, open it, and drag `Pi Agent GUI.app` to Applications. Because the build is unsigned, use Control-click → Open on the first launch. Configure a Provider token from the plug icon before starting a Task. Verify the download before opening it:
+Download the Apple Silicon DMG from the GitHub Release, open it, and drag `Pi Agent GUI.app` to Applications. Because the build is not notarized, use Control-click → Open on the first launch if macOS asks for confirmation. Configure a Provider token from the plug icon before starting a Task. Verify the download before opening it:
 
 ```bash
-shasum -a 256 Pi-Agent-GUI-0.1.0-arm64.dmg
+shasum -a 256 Pi-Agent-GUI-0.1.1-arm64.dmg
 ```
 
 ## Architecture
