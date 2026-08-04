@@ -14,6 +14,7 @@ import {
   type ReasoningMessagePartProps,
   type ToolCallMessagePartProps,
   type ThreadMessageLike,
+  unstable_useComposerInput,
 } from "@assistant-ui/react"
 import type { ToolUIPart } from "ai"
 import { Check, FileUp, RefreshCw, Send, Square, X } from "lucide-react"
@@ -283,8 +284,9 @@ function AssistantMessage() {
 function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEditable, settingsSaving, projectOptions, projectId, showProjectPicker, onProjectChange, draftText, onDraftChange, onModelChange, onPermissionModeChange, onAttachFile }: Omit<AssistantThreadProps, "task" | "onNew" | "onCancel" | "onPermission" | "onRetry">) {
   const aui = useAui()
   const running = useAuiState((state) => state.thread.isRunning)
-  const canSend = useAuiState((state) => state.composer.canSend)
   const composerText = useAuiState((state) => state.composer.text)
+  const composerInput = unstable_useComposerInput()
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const restored = useRef(false)
   const selectedModel = modelOptions.find((model) => model.key === modelKey)
   useEffect(() => {
@@ -296,14 +298,27 @@ function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEdi
     onDraftChange(composerText)
   }, [composerText, onDraftChange])
   useEffect(() => {
-    const input = document.querySelector<HTMLTextAreaElement>(".aui-composer-input")
+    const input = inputRef.current
     if (!input) return
     const syncNativeInput = () => {
-      if (aui.composer.getState().isEditing) aui.composer.setText(input.value)
+      composerInput.setText(input.value)
     }
     input.addEventListener("input", syncNativeInput)
-    return () => input.removeEventListener("input", syncNativeInput)
-  }, [aui])
+    input.addEventListener("compositionend", syncNativeInput)
+    return () => {
+      input.removeEventListener("input", syncNativeInput)
+      input.removeEventListener("compositionend", syncNativeInput)
+    }
+  }, [composerInput.setText])
+  useEffect(() => {
+    const input = inputRef.current
+    if (input && input.value !== composerInput.value) input.value = composerInput.value
+  }, [composerInput.value])
+  function handleInputKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>): void {
+    if (event.nativeEvent.isComposing || event.key !== "Enter" || event.shiftKey || running || !composerInput.canSend) return
+    event.preventDefault()
+    composerInput.send()
+  }
   async function attachFile() {
     const path = await onAttachFile()
     if (!path) return
@@ -327,11 +342,15 @@ function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEdi
         </Select>
         <Button type="button" variant="ghost" size="sm" onClick={() => void attachFile()} disabled={!modelOptions.length}><FileUp className="size-3.5" />@file</Button>
         <div className="flex-1" />
-        {running ? <ComposerPrimitive.Cancel asChild><Button type="button" variant="destructive" size="icon"><Square className="size-3.5 fill-current" /></Button></ComposerPrimitive.Cancel> : <ComposerPrimitive.Send asChild><Button type="button" size="icon" disabled={!canSend || settingsSaving || !modelOptions.length}><Send className="size-4" /></Button></ComposerPrimitive.Send>}
+        {running ? <ComposerPrimitive.Cancel asChild><Button type="button" variant="destructive" size="icon"><Square className="size-3.5 fill-current" /></Button></ComposerPrimitive.Cancel> : <ComposerPrimitive.Send asChild><Button type="button" size="icon" disabled={!composerInput.canSend || settingsSaving || !modelOptions.length}><Send className="size-4" /></Button></ComposerPrimitive.Send>}
       </div>
-      <ComposerPrimitive.Input
+      <textarea
+        ref={inputRef}
+        defaultValue={draftText}
         placeholder={modelOptions.length ? "让 Agent 在这个项目里做什么？" : "先在右上角配置模型服务商"}
         className="aui-composer-input"
+        disabled={composerInput.isDisabled}
+        onKeyDown={handleInputKeyDown}
       />
     </ComposerPrimitive.Root>
   )
