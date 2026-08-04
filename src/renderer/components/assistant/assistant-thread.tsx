@@ -295,6 +295,15 @@ function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEdi
   useEffect(() => {
     onDraftChange(composerText)
   }, [composerText, onDraftChange])
+  useEffect(() => {
+    const input = document.querySelector<HTMLTextAreaElement>(".aui-composer-input")
+    if (!input) return
+    const syncNativeInput = () => {
+      if (aui.composer.getState().isEditing) aui.composer.setText(input.value)
+    }
+    input.addEventListener("input", syncNativeInput)
+    return () => input.removeEventListener("input", syncNativeInput)
+  }, [aui])
   async function attachFile() {
     const path = await onAttachFile()
     if (!path) return
