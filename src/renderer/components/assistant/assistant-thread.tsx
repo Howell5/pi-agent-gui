@@ -320,7 +320,10 @@ function AssistantComposer({ modelOptions, modelKey, permissionMode, settingsEdi
         <div className="flex-1" />
         {running ? <ComposerPrimitive.Cancel asChild><Button type="button" variant="destructive" size="icon"><Square className="size-3.5 fill-current" /></Button></ComposerPrimitive.Cancel> : <ComposerPrimitive.Send asChild><Button type="button" size="icon" disabled={!canSend || settingsSaving || !modelOptions.length}><Send className="size-4" /></Button></ComposerPrimitive.Send>}
       </div>
-      <ComposerPrimitive.Input placeholder={modelOptions.length ? "让 Agent 在这个项目里做什么？" : "先在右上角配置模型服务商"} disabled={!modelOptions.length} className="aui-composer-input" />
+      <ComposerPrimitive.Input
+        placeholder={modelOptions.length ? "让 Agent 在这个项目里做什么？" : "先在右上角配置模型服务商"}
+        className="aui-composer-input"
+      />
     </ComposerPrimitive.Root>
   )
 }
